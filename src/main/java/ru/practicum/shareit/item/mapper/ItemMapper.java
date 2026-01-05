@@ -44,7 +44,7 @@ public final class ItemMapper {
                 .build();
     }
 
-    public static Item updateItemFields(Item updatingItem, ItemUpdateDto itemUpdateDto) {
+    public static void updateItemFields(Item updatingItem, ItemUpdateDto itemUpdateDto) {
 
         if (itemUpdateDto.hasName()) {
             updatingItem.setName(itemUpdateDto.getName());
@@ -58,6 +58,5 @@ public final class ItemMapper {
             updatingItem.setAvailable(itemUpdateDto.getAvailable());
         }
 
-        return updatingItem;
     }
 }

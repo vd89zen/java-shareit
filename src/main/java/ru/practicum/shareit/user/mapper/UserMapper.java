@@ -32,7 +32,7 @@ public final class UserMapper {
                 .build();
     }
 
-    public static User updateUserFields(User updatingUser, UserUpdateDto userUpdateDto) {
+    public static void updateUserFields(User updatingUser, UserUpdateDto userUpdateDto) {
 
         if (userUpdateDto.hasName()) {
             updatingUser.setName(userUpdateDto.getName());
@@ -42,6 +42,5 @@ public final class UserMapper {
             updatingUser.setEmail(userUpdateDto.getEmail());
         }
 
-        return updatingUser;
     }
 }

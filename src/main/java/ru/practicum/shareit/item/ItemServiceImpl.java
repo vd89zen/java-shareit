@@ -75,7 +75,7 @@ public class ItemServiceImpl implements ItemService {
                     .build());
         }
 
-        updatingItem = ItemMapper.updateItemFields(updatingItem, itemUpdateDto);
+        ItemMapper.updateItemFields(updatingItem, itemUpdateDto);
         itemStorage.update(updatingItem);
         return ItemMapper.toItemDtoForResponse(updatingItem);
     }

@@ -56,7 +56,7 @@ public class UserService {
         }
 
         User updatingUser = getUserOrThrow(userId);
-        updatingUser = UserMapper.updateUserFields(updatingUser, userUpdateDto);
+        UserMapper.updateUserFields(updatingUser, userUpdateDto);
         userStorage.update(updatingUser);
 
         return UserMapper.toUserDtoForResponse(updatingUser);
