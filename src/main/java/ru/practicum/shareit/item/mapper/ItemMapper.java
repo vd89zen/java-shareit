@@ -7,8 +7,6 @@ import ru.practicum.shareit.item.dto.ItemDtoForResponse;
 import ru.practicum.shareit.item.dto.ItemUpdateDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.request.model.ItemRequest;
-import ru.practicum.shareit.user.dto.UserUpdateDto;
-import ru.practicum.shareit.user.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ItemMapper {
