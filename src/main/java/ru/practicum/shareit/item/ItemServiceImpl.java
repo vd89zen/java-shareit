@@ -67,7 +67,7 @@ public class ItemServiceImpl implements ItemService {
         userService.checkUserExists(userId);
         Item updatingItem = getItemOrThrow(itemId);
 
-        if (updatingItem.getOwner().getId() != userId) {
+        if (updatingItem.getOwner().getId().equals(userId) == false) {
             throw new ValidationException(ValidationError.builder()
                     .field("owner")
                     .message(String.format("Пользователь ID %d не является владельцем вещи ID %d.", userId, itemId))
