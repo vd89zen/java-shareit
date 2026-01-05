@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class UserService {
-    private final String USER_NOT_FOUND = "Пользователь с id = %d не найден.";
+    private static final String USER_NOT_FOUND = "Пользователь с id = %d не найден.";
     private final UserStorage userStorage;
 
     public UserDtoForResponse create(UserDto userDto) {
