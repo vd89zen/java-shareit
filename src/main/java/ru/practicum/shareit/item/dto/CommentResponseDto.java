@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.dto;
 import lombok.*;
 
 import java.time.LocalDateTime;
+
 @Data
 @EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor
