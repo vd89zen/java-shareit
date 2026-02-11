@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RequestMapping(path = "/bookings")
 public class BookingController {
     private final BookingService bookingService;
-    
+
     public BookingController(BookingService bookingService) {
         this.bookingService = bookingService;
     }
