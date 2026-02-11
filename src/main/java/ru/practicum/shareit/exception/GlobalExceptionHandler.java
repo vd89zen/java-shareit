@@ -37,10 +37,26 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(errors);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({WrongRequestException.class})
+    public ErrorResponse handleWrongRequestException(WrongRequestException exception) {
+        log.error("Ошибка: {}", exception.getMessage());
+        List<ValidationError> errors = Collections.singletonList(new ValidationError(null, exception.getMessage(), null));
+        return new ErrorResponse(errors);
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler({NotFoundException.class})
     public ErrorResponse handleNotFoundException(NotFoundException exception) {
         log.error("Ресурс не найден: {}", exception.getMessage());
+        List<ValidationError> errors = Collections.singletonList(new ValidationError(null, exception.getMessage(), null));
+        return new ErrorResponse(errors);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({AccessException.class})
+    public ErrorResponse handleAccessException(AccessException exception) {
+        log.error("Ошибка доступа к ресурсу: {}", exception.getMessage());
         List<ValidationError> errors = Collections.singletonList(new ValidationError(null, exception.getMessage(), null));
         return new ErrorResponse(errors);
     }

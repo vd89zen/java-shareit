@@ -12,6 +12,7 @@ import lombok.*;
 public class UserDto {
     @NotBlank(message = "Не указано имя пользователя.")
     private String name;
+
     @NotBlank(message = "Не указана электронная почта.")
     @Email(message = "Неверный формат адреса электронной почты.")
     private String email;

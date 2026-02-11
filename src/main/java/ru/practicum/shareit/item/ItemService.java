@@ -1,24 +1,38 @@
 package ru.practicum.shareit.item;
 
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoForResponse;
-import ru.practicum.shareit.item.dto.ItemUpdateDto;
+import ru.practicum.shareit.item.dto.*;
+import ru.practicum.shareit.item.model.Comment;
+import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 
 public interface ItemService {
 
-    ItemDtoForResponse create(Long userId, ItemDto itemDto);
+    Item create(Long ownerId, ItemDto itemDto);
 
-    ItemDtoForResponse findById(Long itemId);
+    Item findById(Long itemId);
 
-    List<ItemDtoForResponse> findAll(Long userId);
+    List<Item> findAll(Long ownerId);
 
-    ItemDtoForResponse update(Long userId, Long itemId, ItemUpdateDto itemUpdateDto);
+    Item update(Long ownerId, Long itemId, ItemUpdateDto itemUpdateDto);
 
-    void delete(Long userId, Long itemId);
+    Item updateItemAvailable(Item item, Boolean available);
 
-    List<ItemDtoForResponse> search(String text);
+    void delete(Long ownerId, Long itemId);
+
+    List<Item> search(String text);
+
+    Comment comment(Long userId, Long itemId, NewCommentDto newCommentDto);
 
     void checkItemExists(Long itemId);
+
+    Item checkItemOwner(Long ownerId, Long itemId);
+
+    ItemResponseDto getItemResponseDto(Item item);
+
+    List<ItemResponseDto> getListItemResponseDto(List<Item> items);
+
+    ItemResponseForOwnerDto getItemResponseForOwnerDto(Item item);
+
+    List<ItemResponseForOwnerDto> getListItemResponseForOwnerDto(List<Item> items);
 }

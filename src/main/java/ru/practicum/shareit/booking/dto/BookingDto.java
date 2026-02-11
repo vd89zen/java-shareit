@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +16,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class BookingDto {
+    @NotNull(message = "Дата начала аренды не может быть null.")
     private LocalDateTime start;
+
+    @NotNull(message = "Дата окончания аренды не может быть null.")
     private LocalDateTime end;
+
+    @NotNull(message = "Не указан ID вещи.")
     private Long itemId;
-    private Long bookerId;// ID пользователь, который осуществляет бронирование;
-    private String status;
 }

@@ -5,10 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @Data
-@EqualsAndHashCode(of = "email")
-@AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class UserUpdateDto {
     @Pattern(regexp = ".*\\S+.*",
             message = "(Если поле не null: должно содержать хотя бы один непробельный символ.")
