@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(path = "/bookings")
 public class BookingController {
-    private BookingService bookingService;
+    private final BookingService bookingService;
     
     public BookingController(BookingService bookingService) {
         this.bookingService = bookingService;
@@ -66,7 +66,7 @@ public class BookingController {
                 .ok(
                         bookingService.getBookingsForBooker(userId, state).stream()
                                 .map(BookingMapper::toBookingResponseDto)
-                                .collect(Collectors.toUnmodifiableList())
+                                .collect(Collectors.toList())
                 );
     }
 
@@ -78,7 +78,7 @@ public class BookingController {
                 .ok(
                         bookingService.getBookingsForOwner(userId, state).stream()
                                 .map(BookingMapper::toBookingResponseDto)
-                                .collect(Collectors.toUnmodifiableList())
+                                .collect(Collectors.toList())
                 );
     }
 }

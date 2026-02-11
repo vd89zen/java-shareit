@@ -52,7 +52,7 @@ public class UserController {
                 .ok(
                         userService.findAll().stream()
                                 .map(UserMapper::toUserResponseDto)
-                                .collect(Collectors.toUnmodifiableList())
+                                .collect(Collectors.toList())
                 );
     }
 
