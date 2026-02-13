@@ -22,6 +22,7 @@ public interface BookingService {
     void checkBookingExists(Long bookingId);
 
     BookingResponseDto getBookingResponseDto(Booking booking);
+
     List<BookingResponseDto> getListBookingResponseDto(List<Booking> bookings);
 
 }
