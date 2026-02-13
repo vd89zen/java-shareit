@@ -7,12 +7,14 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationError;
 import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.user.dto.UserResponseDto;
 import ru.practicum.shareit.user.dto.UserUpdateDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -92,6 +94,18 @@ public class UserServiceImpl implements UserService {
                     .build());
         }
         log.info("email {} свободен.", email);
+    }
+
+    @Override
+    public UserResponseDto getUserResponseDto(User user) {
+        return UserMapper.toUserResponseDto(user);
+    }
+
+    @Override
+    public List<UserResponseDto> getListUserResponseDto(List<User> users) {
+        return users.stream()
+                .map(UserMapper::toUserResponseDto)
+                .collect(Collectors.toList());
     }
 
     private User getUserOrThrow(Long userId) {

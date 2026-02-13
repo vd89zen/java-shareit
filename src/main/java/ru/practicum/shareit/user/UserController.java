@@ -9,10 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserResponseDto;
 import ru.practicum.shareit.user.dto.UserUpdateDto;
-import ru.practicum.shareit.user.mapper.UserMapper;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * TODO Sprint add-controllers.
@@ -32,7 +30,7 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        UserMapper.toUserResponseDto(
+                        userService.getUserResponseDto(
                                 userService.create(userDto))
                 );
     }
@@ -41,7 +39,7 @@ public class UserController {
     public ResponseEntity<UserResponseDto> findById(@PathVariable @NotNull Long userId) {
         return ResponseEntity
                 .ok(
-                        UserMapper.toUserResponseDto(
+                        userService.getUserResponseDto(
                                 userService.findById(userId))
                 );
     }
@@ -50,9 +48,8 @@ public class UserController {
     public ResponseEntity<List<UserResponseDto>> findAll() {
         return ResponseEntity
                 .ok(
-                        userService.findAll().stream()
-                                .map(UserMapper::toUserResponseDto)
-                                .collect(Collectors.toList())
+                        userService.getListUserResponseDto(
+                                userService.findAll())
                 );
     }
 
@@ -61,7 +58,7 @@ public class UserController {
                                                   @Valid @RequestBody UserUpdateDto userUpdateDto) {
         return ResponseEntity
                 .ok(
-                        UserMapper.toUserResponseDto(
+                        userService.getUserResponseDto(
                                 userService.update(userId, userUpdateDto))
                 );
     }

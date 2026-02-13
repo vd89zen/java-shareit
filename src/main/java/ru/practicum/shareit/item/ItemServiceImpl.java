@@ -119,7 +119,7 @@ public class ItemServiceImpl implements ItemService {
         log.info("Проверяем владеет ли пользователь ID {} вещью ID {}.", ownerId, itemId);
         Item item = getItemOrThrow(itemId);
         if (item.getOwner().getId().equals(ownerId) == false) {
-            throw new AccessException(
+            throw new WrongOwnerException(
                     String.format("Пользователь ID %d не является владельцем вещи ID %d.", ownerId, itemId));
         }
         log.info("Подтверждено владение пользователя ID {} вещью {}.", ownerId, item);
@@ -152,16 +152,16 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    public CommentResponseDto getCommentResponseDto(Comment comment) {
+        return CommentMapper.toCommentResponseDto(comment);
+    }
+
+    @Override
     public ItemResponseDto getItemResponseDto(Item item) {
         log.info("Конвертируем в дто: {}.", item);
         Long itemId = item.getId();
         ItemResponseDto dto = ItemMapper.toItemResponseDto(item);
         dto.setComments(CommentMapper.toListCommentResponseDto(commentRepository.findAllByItemId(itemId)));
-//        ItemBookingDatesDto datesDto = bookingRepository.findBookingDatesByItemId(itemId);
-//        if (datesDto != null) {
-//            dto.setLastBooking(datesDto.getLastBooking());
-//            dto.setNextBooking(datesDto.getNextBooking());
-//        }
         log.info("Сконвертировали: {}.", dto);
         return dto;
     }
@@ -175,10 +175,6 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.groupingBy(
                         comment -> comment.getItem().getId()
                 ));
-
-//        Map<Long, ItemBookingDatesDto> datesMap = bookingRepository.findBookingDatesByItemIds(itemIds).stream()
-//                .collect(Collectors.toMap(ItemBookingDatesDto::getItemId, dto -> dto));
-
         return items.stream()
                 .map(item -> {
                     ItemResponseDto dto = ItemMapper.toItemResponseDto(item);
@@ -186,12 +182,6 @@ public class ItemServiceImpl implements ItemService {
 
                     dto.setComments(CommentMapper.toListCommentResponseDto(
                             commentsByItemId.getOrDefault(id, Collections.emptyList())));
-
-//                    ItemBookingDatesDto datesDto = datesMap.get(id);
-//                    if (datesDto != null) {
-//                        dto.setLastBooking(datesDto.getLastBooking());
-//                        dto.setNextBooking(datesDto.getNextBooking());
-//                    }
                     return dto;
                 }).collect(Collectors.toList());
     }

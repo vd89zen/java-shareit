@@ -54,9 +54,9 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({AccessException.class})
-    public ErrorResponse handleAccessException(AccessException exception) {
-        log.error("Ошибка доступа к ресурсу: {}", exception.getMessage());
+    @ExceptionHandler({WrongOwnerException.class})
+    public ErrorResponse handleWrongOwnerException(WrongOwnerException exception) {
+        log.error("Ошибка прав доступа к ресурсу: {}", exception.getMessage());
         List<ValidationError> errors = Collections.singletonList(new ValidationError(null, exception.getMessage(), null));
         return new ErrorResponse(errors);
     }

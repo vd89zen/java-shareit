@@ -7,11 +7,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
-import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.State;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * TODO Sprint add-bookings.
@@ -32,7 +30,7 @@ public class BookingController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        BookingMapper.toBookingResponseDto(
+                        bookingService.getBookingResponseDto(
                                 bookingService.create(userId, bookingDto))
                 );
     }
@@ -43,7 +41,7 @@ public class BookingController {
             @PathVariable(required = true) Long bookingId, @RequestParam(required = true) Boolean approved) {
         return ResponseEntity
                 .ok(
-                        BookingMapper.toBookingResponseDto(
+                        bookingService.getBookingResponseDto(
                                 bookingService.approveOrRejectBooking(userId, bookingId, approved))
                 );
     }
@@ -53,7 +51,7 @@ public class BookingController {
                                                                         @PathVariable(required = true) Long bookingId) {
         return ResponseEntity
                 .ok(
-                        BookingMapper.toBookingResponseDto(
+                        bookingService.getBookingResponseDto(
                                 bookingService.getBookingWithAccessCheck(userId, bookingId))
                 );
     }
@@ -64,9 +62,8 @@ public class BookingController {
             @RequestParam(defaultValue = "ALL") State state) {
         return ResponseEntity
                 .ok(
-                        bookingService.getBookingsForBooker(userId, state).stream()
-                                .map(BookingMapper::toBookingResponseDto)
-                                .collect(Collectors.toList())
+                        bookingService.getListBookingResponseDto(
+                                bookingService.getBookingsForBooker(userId, state))
                 );
     }
 
@@ -76,9 +73,8 @@ public class BookingController {
             @RequestParam(defaultValue = "ALL") State state) {
         return ResponseEntity
                 .ok(
-                        bookingService.getBookingsForOwner(userId, state).stream()
-                                .map(BookingMapper::toBookingResponseDto)
-                                .collect(Collectors.toList())
+                        bookingService.getListBookingResponseDto(
+                                bookingService.getBookingsForOwner(userId, state))
                 );
     }
 }

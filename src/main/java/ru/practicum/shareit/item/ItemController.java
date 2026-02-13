@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.*;
-import ru.practicum.shareit.item.mapper.CommentMapper;
 
 import java.util.List;
 
@@ -88,7 +87,7 @@ public class ItemController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        CommentMapper.toCommentResponseDto(
+                        itemService.getCommentResponseDto(
                                 itemService.comment(userId, itemId, newCommentDto))
                 );
     }

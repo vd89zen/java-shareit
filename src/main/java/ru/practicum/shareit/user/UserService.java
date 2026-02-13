@@ -1,6 +1,7 @@
 package ru.practicum.shareit.user;
 
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserResponseDto;
 import ru.practicum.shareit.user.dto.UserUpdateDto;
 import ru.practicum.shareit.user.model.User;
 
@@ -21,4 +22,9 @@ public interface UserService {
     void checkUserExists(Long userId);
 
     void checkEmailUse(String email);
+
+    UserResponseDto getUserResponseDto(User user);
+
+    List<UserResponseDto> getListUserResponseDto(List<User> users);
+
 }

@@ -28,6 +28,8 @@ public interface ItemService {
 
     Item checkItemOwner(Long ownerId, Long itemId);
 
+    CommentResponseDto getCommentResponseDto(Comment comment);
+
     ItemResponseDto getItemResponseDto(Item item);
 
     List<ItemResponseDto> getListItemResponseDto(List<Item> items);

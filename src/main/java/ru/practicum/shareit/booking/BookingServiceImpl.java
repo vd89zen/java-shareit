@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.State;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -51,7 +53,7 @@ public class BookingServiceImpl implements BookingService {
         Item item = itemService.findById(bookingDto.getItemId());
 
         if (item.getAvailable() == false) {
-            throw new AccessException("Вещь недоступна для аренды");
+            throw new WrongRequestException("Вещь недоступна для аренды");
         }
 
         Booking newBooking = BookingMapper.toBooking(bookingDto);
@@ -70,7 +72,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingOrThrow(bookingId);
         final Long ownerId = booking.getItem().getOwner().getId();
         if (userId.equals(ownerId) == false) {
-            throw new AccessException("Пользователь не является владельцем вещи.");
+            throw new WrongOwnerException("Пользователь не является владельцем вещи.");
         }
 
         if (approved) {
@@ -92,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
         final Long bookerId = booking.getBooker().getId();
         final Long ownerId = booking.getItem().getOwner().getId();
         if (userId.equals(bookerId) == false && userId.equals(ownerId) == false) {
-            throw new AccessException("Пользователь не является ни создателем брони, ни владельцем вещи");
+            throw new WrongOwnerException("Пользователь не является ни создателем брони, ни владельцем вещи");
         }
         log.info("Найдена бронь ID {}, с проверкой прав пользователя ID {}", bookingId, userId);
         return booking;
@@ -102,32 +104,19 @@ public class BookingServiceImpl implements BookingService {
     public List<Booking> getBookingsForBooker(Long bookerId, State state) {
         log.info("Получение бронирований ({}) пользователя ID {}.", state.name(), bookerId);
         userService.checkUserExists(bookerId);
-        List<Booking> bookings;
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByBookerIdOrderByStartDesc(bookerId);
-                log.info("ALL Получены ({}) бронирования пользователя ID {}: {}.", state.name(), bookerId, bookings);
-                return bookings;
+                return getAllBookingsForBooker(bookerId);
             case REJECTED:
-                bookings = bookingRepository.findByBookerIdAndStatus(bookerId, Status.REJECTED);
-                log.info("REJECTED Получены ({}) бронирования пользователя ID {}: {}.", state.name(), bookerId, bookings);
-                return bookings;
+                return getRejectedBookingsForBooker(bookerId);
             case WAITING:
-                bookings = bookingRepository.findByBookerIdAndStatus(bookerId, Status.WAITING);
-                log.info("WAITING Получены ({}) бронирования пользователя ID {}:  {}.", state.name(), bookerId, bookings);
-                return bookings;
+                return getWaitingBookingsForBooker(bookerId);
             case PAST:
-                bookings = bookingRepository.findByBookerIdPastBookings(bookerId, List.of(Status.APPROVED, Status.CANCELED));
-                log.info("PAST Получены ({}) бронирования пользователя ID {}:  {}.", state.name(), bookerId, bookings);
-                return bookings;
+                return getPastBookingsForBooker(bookerId);
             case FUTURE:
-                bookings = bookingRepository.findByBookerIdFutureBookings(bookerId, List.of(Status.APPROVED, Status.WAITING));
-                log.info("FUTURE Получены ({}) бронирования пользователя ID {}:  {}.", state.name(), bookerId, bookings);
-                return bookings;
+                return getFutureBookingsForBooker(bookerId);
             case CURRENT:
-                bookings = bookingRepository.findByBookerIdCurrentBookings(bookerId, Status.APPROVED);
-                log.info("CURENT Получены ({}) бронирования пользователя ID {}:  {}.", state.name(), bookerId, bookings);
-                return bookings;
+                return getCurrentBookingsForBooker(bookerId);
             default:
                 throw new ValidationException(ValidationError.builder()
                         .field("Эндпоинт: GET /bookings?state={state}")
@@ -142,32 +131,19 @@ public class BookingServiceImpl implements BookingService {
     public List<Booking> getBookingsForOwner(Long ownerId, State state) {
         log.info("Получение бронирований ({}) для вещей пользователя ID {}", state.name(), ownerId);
         userService.checkUserExists(ownerId);
-        List<Booking> bookings;
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByOwnerId(ownerId);
-                log.info("Получены ALL ({}) бронирования пользователя ID {}: {}.", state.name(), ownerId, bookings);
-                return bookings;
+                return getAllBookingsForOwner(ownerId);
             case REJECTED:
-                bookings = bookingRepository.findByOwnerIdAndStatus(ownerId, Status.REJECTED);
-                log.info("Получены REJECTED ({}) бронирования пользователя ID {}: {}.", state.name(), ownerId, bookings);
-                return bookings;
+                return getRejectedBookingsForOwner(ownerId);
             case WAITING:
-                bookings = bookingRepository.findByOwnerIdAndStatus(ownerId, Status.WAITING);
-                log.info("Получены WAITING ({}) бронирования пользователя ID {}: {}.", state.name(), ownerId, bookings);
-                return bookings;
+                return getWaitingBookingsForOwner(ownerId);
             case PAST:
-                bookings = bookingRepository.findByOwnerIdPastBookings(ownerId, List.of(Status.APPROVED, Status.CANCELED));
-                log.info("Получены PAST ({}) бронирования пользователя ID {}: {}.", state.name(), ownerId, bookings);
-                return bookings;
+                return getPastBookingsForOwner(ownerId);
             case FUTURE:
-                bookings = bookingRepository.findByOwnerIdFutureBookings(ownerId, List.of(Status.APPROVED, Status.WAITING));
-                log.info("Получены FUTURE ({}) бронирования пользователя ID {}: {}.", state.name(), ownerId, bookings);
-                return bookings;
+                return getFutureBookingsForOwner(ownerId);
             case CURRENT:
-                bookings = bookingRepository.findByOwnerIdCurrentBookings(ownerId, Status.APPROVED);
-                log.info("Получены CURRENT ({}) бронирования пользователя ID {}: {}.", state.name(), ownerId, bookings);
-                return bookings;
+                return getCurrentBookingsForOwner(ownerId);
             default:
                 throw new ValidationException(ValidationError.builder()
                         .field("Эндпоинт: GET /bookings/owner?state={state}")
@@ -187,9 +163,94 @@ public class BookingServiceImpl implements BookingService {
         log.info("Заявка на аренду ID {} существует.", bookingId);
     }
 
+    @Override
+    public BookingResponseDto getBookingResponseDto(Booking booking) {
+        return BookingMapper.toBookingResponseDto(booking);
+    }
+
+    @Override
+    public List<BookingResponseDto> getListBookingResponseDto(List<Booking> bookings) {
+        return bookings.stream()
+                .map(BookingMapper::toBookingResponseDto)
+                .collect(Collectors.toList());
+    }
+
     private Booking getBookingOrThrow(Long bookingId) {
         log.info("Получение заявки на аренду ID {}.", bookingId);
         return bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException(String.format(BOOKING_NOT_FOUND, bookingId)));
     }
+
+    private List<Booking> getAllBookingsForBooker(Long bookerId) {
+        List<Booking> bookings = bookingRepository.findByBookerIdOrderByStartDesc(bookerId);
+        log.info("ALL Получены ({}) бронирования пользователя ID {}: {}.", State.ALL.name(), bookerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getRejectedBookingsForBooker(Long bookerId) {
+        List<Booking> bookings = bookingRepository.findByBookerIdAndStatus(bookerId, Status.REJECTED);
+        log.info("REJECTED Получены ({}) бронирования пользователя ID {}: {}.", State.REJECTED.name(), bookerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getWaitingBookingsForBooker(Long bookerId) {
+        List<Booking> bookings = bookingRepository.findByBookerIdAndStatus(bookerId, Status.WAITING);
+        log.info("WAITING Получены ({}) бронирования пользователя ID {}:  {}.", State.WAITING.name(), bookerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getPastBookingsForBooker(Long bookerId) {
+        List<Booking> bookings = bookingRepository.findByBookerIdPastBookings(bookerId, List.of(Status.APPROVED, Status.CANCELED));
+        log.info("PAST Получены ({}) бронирования пользователя ID {}:  {}.", State.PAST.name(), bookerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getFutureBookingsForBooker(Long bookerId) {
+        List<Booking> bookings = bookingRepository.findByBookerIdFutureBookings(bookerId, List.of(Status.APPROVED, Status.WAITING));
+        log.info("FUTURE Получены ({}) бронирования пользователя ID {}:  {}.", State.FUTURE.name(), bookerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getCurrentBookingsForBooker(Long bookerId) {
+        List<Booking> bookings = bookingRepository.findByBookerIdCurrentBookings(bookerId, Status.APPROVED);
+        log.info("CURRENT Получены ({}) бронирования пользователя ID {}:  {}.", State.CURRENT.name(), bookerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getAllBookingsForOwner(Long ownerId) {
+        List<Booking> bookings = bookingRepository.findByOwnerId(ownerId);
+        log.info("Получены ALL ({}) бронирования пользователя ID {}: {}.", State.ALL.name(), ownerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getRejectedBookingsForOwner(Long ownerId) {
+        List<Booking> bookings = bookingRepository.findByOwnerIdAndStatus(ownerId, Status.REJECTED);
+        log.info("Получены REJECTED ({}) бронирования пользователя ID {}: {}.", State.REJECTED.name(), ownerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getWaitingBookingsForOwner(Long ownerId) {
+        List<Booking> bookings = bookingRepository.findByOwnerIdAndStatus(ownerId, Status.WAITING);
+        log.info("Получены WAITING ({}) бронирования пользователя ID {}: {}.", State.WAITING.name(), ownerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getPastBookingsForOwner(Long ownerId) {
+        List<Booking> bookings = bookingRepository.findByOwnerIdPastBookings(ownerId, List.of(Status.APPROVED, Status.CANCELED));
+        log.info("Получены PAST ({}) бронирования пользователя ID {}: {}.", State.PAST.name(), ownerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getFutureBookingsForOwner(Long ownerId) {
+        List<Booking> bookings = bookingRepository.findByOwnerIdFutureBookings(ownerId, List.of(Status.APPROVED, Status.WAITING));
+        log.info("Получены FUTURE ({}) бронирования пользователя ID {}: {}.", State.FUTURE.name(), ownerId, bookings);
+        return bookings;
+    }
+
+    private List<Booking> getCurrentBookingsForOwner(Long ownerId) {
+        List<Booking> bookings = bookingRepository.findByOwnerIdCurrentBookings(ownerId, Status.APPROVED);
+        log.info("Получены CURRENT ({}) бронирования пользователя ID {}: {}.", State.CURRENT.name(), ownerId, bookings);
+        return bookings;
+    }
+
 }
