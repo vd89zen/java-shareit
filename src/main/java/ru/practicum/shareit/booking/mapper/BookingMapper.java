@@ -3,10 +3,10 @@ package ru.practicum.shareit.booking.mapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.booking.dto.BookingDtoForResponse;
+import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.user.mapper.UserMapper;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BookingMapper {
@@ -16,17 +16,17 @@ public final class BookingMapper {
                 .start(booking.getStart())
                 .end(booking.getEnd())
                 .itemId(booking.getItem().getId())
-                .bookerId(booking.getBooker().getId())
                 .build();
     }
 
-    public static BookingDtoForResponse toBookingDtoForResponse(Booking booking) {
-        return BookingDtoForResponse.builder()
+    public static BookingResponseDto toBookingResponseDto(Booking booking) {
+        return BookingResponseDto.builder()
                 .id(booking.getId())
                 .start(booking.getStart())
                 .end(booking.getEnd())
-                .itemId(booking.getItem().getId())
-                .bookerId(booking.getBooker().getId())
+                .item(ItemMapper.toItemResponseDto(booking.getItem()))
+                .booker(UserMapper.toUserResponseDto(booking.getBooker()))
+                .status(booking.getStatus().name())
                 .build();
     }
 
@@ -34,12 +34,6 @@ public final class BookingMapper {
         return Booking.builder()
                 .start(bookingDto.getStart())
                 .end(bookingDto.getEnd())
-                .item(Item.builder()
-                        .id(bookingDto.getItemId())
-                        .build())
-                .booker(User.builder()
-                        .id(bookingDto.getBookerId())
-                        .build())
                 .build();
     }
 }

@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
  * TODO Sprint add-item-requests.
  */
@@ -17,5 +15,4 @@ import java.time.LocalDateTime;
 public class ItemRequestDto {
     private String description;
     private Long requestorId;
-    private LocalDateTime created;
 }

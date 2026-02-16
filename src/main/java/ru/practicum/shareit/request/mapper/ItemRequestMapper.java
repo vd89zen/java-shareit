@@ -3,7 +3,7 @@ package ru.practicum.shareit.request.mapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
-import ru.practicum.shareit.request.dto.ItemRequestDtoForResponse;
+import ru.practicum.shareit.request.dto.ItemRequestResponseDto;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
@@ -14,16 +14,14 @@ public final class ItemRequestMapper {
         return ItemRequestDto.builder()
                 .description(itemRequest.getDescription())
                 .requestorId(itemRequest.getRequestor().getId())
-                .created(itemRequest.getCreated())
                 .build();
     }
 
-    public static ItemRequestDtoForResponse toItemRequestDtoForResponse(ItemRequest itemRequest) {
-        return ItemRequestDtoForResponse.builder()
+    public static ItemRequestResponseDto toItemRequestResponseDto(ItemRequest itemRequest) {
+        return ItemRequestResponseDto.builder()
                 .id(itemRequest.getId())
                 .description(itemRequest.getDescription())
                 .requestorId(itemRequest.getRequestor().getId())
-                .created(itemRequest.getCreated())
                 .build();
     }
 
@@ -33,7 +31,6 @@ public final class ItemRequestMapper {
                 .requestor(User.builder()
                         .id(itemRequestDto.getRequestorId())
                         .build())
-                .created(itemRequestDto.getCreated())
                 .build();
     }
 }

@@ -6,9 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoForResponse;
-import ru.practicum.shareit.item.dto.ItemUpdateDto;
+import ru.practicum.shareit.item.dto.*;
 
 import java.util.List;
 
@@ -26,37 +24,71 @@ public class ItemController {
     }
 
     @PostMapping
-    public ResponseEntity<ItemDtoForResponse> create(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                     @Valid @RequestBody ItemDto itemDto) {
+    public ResponseEntity<ItemResponseDto> create(@RequestHeader("X-Sharer-User-Id") @NotNull Long userId,
+                                                  @Valid @RequestBody ItemDto itemDto) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(itemService.create(userId, itemDto));
+                .body(
+                        itemService.getItemResponseDto(
+                                itemService.create(userId, itemDto))
+                );
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<ItemDtoForResponse> findById(@PathVariable @NotNull Long itemId) {
+    public ResponseEntity<ItemResponseDto> findById(@PathVariable @NotNull Long itemId) {
         return ResponseEntity
-                .ok(itemService.findById(itemId));
+                .ok(
+                        itemService.getItemResponseDto(
+                                itemService.findById(itemId))
+                );
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDtoForResponse>> findAll(@RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ResponseEntity<List<ItemResponseForOwnerDto>> findAllForOwner(@RequestHeader("X-Sharer-User-Id") @NotNull Long userId) {
         return ResponseEntity
-                .ok(itemService.findAll(userId));
+                .ok(
+                        itemService.getListItemResponseForOwnerDto(
+                                itemService.findAll(userId))
+                );
     }
 
     @PatchMapping("/{itemId}")
-    public ResponseEntity<ItemDtoForResponse> update(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                     @PathVariable @NotNull Long itemId,
-                                                     @Valid @RequestBody ItemUpdateDto itemUpdateDto) {
+    public ResponseEntity<ItemResponseDto> update(@RequestHeader("X-Sharer-User-Id") @NotNull Long userId,
+                                                  @PathVariable @NotNull Long itemId,
+                                                  @Valid @RequestBody ItemUpdateDto itemUpdateDto) {
         return ResponseEntity
-                .ok(itemService.update(userId, itemId, itemUpdateDto));
+                .ok(
+                        itemService.getItemResponseDto(
+                                itemService.update(userId, itemId, itemUpdateDto))
+                );
+    }
+
+    @DeleteMapping("/{itemId}")
+    public ResponseEntity<Void> delete(@RequestHeader("X-Sharer-User-Id") @NotNull Long userId,
+                                       @PathVariable @NotNull Long itemId) {
+        itemService.delete(userId, itemId);
+        return ResponseEntity
+                .noContent().build();
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ItemDtoForResponse>> search(@RequestParam @NotNull String text) {
+    public ResponseEntity<List<ItemResponseDto>> search(@RequestParam @NotNull String text) {
         return ResponseEntity
-                .ok(itemService.search(text));
+                .ok(
+                        itemService.getListItemResponseDto(
+                                itemService.search(text))
+                );
     }
 
+    @PostMapping("/{itemId}/comment")
+    public ResponseEntity<CommentResponseDto> comment(@RequestHeader("X-Sharer-User-Id") @NotNull Long userId,
+                                                   @PathVariable @NotNull Long itemId,
+                                                   @Valid @RequestBody NewCommentDto newCommentDto) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        itemService.getCommentResponseDto(
+                                itemService.comment(userId, itemId, newCommentDto))
+                );
+    }
 }
