@@ -54,7 +54,7 @@ public class BookingClient extends BaseClient {
     }
 
     public ResponseEntity<Object> getBookingsForOwner(long userId, BookingState state, Integer page, Integer size) {
-        String path = String.format("/owner?state={state}&page={page}&size={size}");
+        String path = "/owner?state={state}&page={page}&size={size}";
         Map<String, Object> parameters = Map.of(
                 "state", state.name(),
                 "page", page,
