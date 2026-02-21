@@ -38,14 +38,19 @@ class RequestItemServiceImplIntegrationTest {
     @Autowired
     private RequestItemRepository requestItemRepository;
 
+    private static final int PAGE_0 = 0;
+    private static final int PAGE_1 = 1;
+    private static final int DEFAULT_PAGE_SIZE = 10;
+
+    private User createUser(String name, String email) {
+        return userService.createUser(new NewUserDto(name, email));
+    }
+
     @Test
     @DisplayName("Возвращает запросы с вещами, если есть запросы")
     void getAllRequestItemByRequestor_Should_Return_Requests_With_Items_When_User_Has_Requests_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Test User");
-        newUserDto.setEmail("test@user.com");
-        User requestor = userService.createUser(newUserDto);
+        User requestor = createUser("Test User", "test@user.com");
 
         RequestItem request = RequestItem.builder()
                 .description("Need tools")
@@ -63,11 +68,9 @@ class RequestItemServiceImplIntegrationTest {
                 .build();
         itemRepository.save(item);
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<RequestItemResponseDto> result = requestItemService.getAllRequestItemByRequestor(requestor.getId(), page, size);
+        List<RequestItemResponseDto> result = requestItemService.getAllRequestItemByRequestor(
+                requestor.getId(), PAGE_0, DEFAULT_PAGE_SIZE);
 
         // Then
         assertNotNull(result);
@@ -90,16 +93,11 @@ class RequestItemServiceImplIntegrationTest {
     @DisplayName("Возвращает пустой список, если нет запросов")
     void getAllRequestItemByRequestor_Should_Return_Empty_List_When_User_Has_No_Requests_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("No Requests User");
-        newUserDto.setEmail("no-requests@test.com");
-        User user = userService.createUser(newUserDto);
-
-        int page = 0;
-        int size = 10;
+        User user = createUser("No Requests User", "no-requests@test.com");
 
         // When
-        List<RequestItemResponseDto> result = requestItemService.getAllRequestItemByRequestor(user.getId(), page, size);
+        List<RequestItemResponseDto> result = requestItemService.getAllRequestItemByRequestor(
+                user.getId(), PAGE_0, DEFAULT_PAGE_SIZE);
 
         // Then
         assertNotNull(result);
@@ -110,12 +108,10 @@ class RequestItemServiceImplIntegrationTest {
     @DisplayName("Работает с пагинацией при множестве запросов")
     void getAllRequestItemByRequestor_Should_Handle_Pagination_When_Many_Requests_Exist_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Paginated User");
-        newUserDto.setEmail("paginated@test.com");
-        User requestor = userService.createUser(newUserDto);
+        User requestor = createUser("Paginated User", "paginated@test.com");
+        final int TOTAL_REQUESTS_COUNT = 15;
 
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < TOTAL_REQUESTS_COUNT; i++) {
             RequestItem request = RequestItem.builder()
                     .description("Request " + i)
                     .requestor(requestor)
@@ -124,14 +120,15 @@ class RequestItemServiceImplIntegrationTest {
             requestItemRepository.save(request);
         }
 
-        int pageSize = 10;
-
         // When
-        List<RequestItemResponseDto> firstPage = requestItemService.getAllRequestItemByRequestor(requestor.getId(), 0, pageSize);
-        List<RequestItemResponseDto> secondPage = requestItemService.getAllRequestItemByRequestor(requestor.getId(), 1, pageSize);
+        List<RequestItemResponseDto> firstPage = requestItemService.getAllRequestItemByRequestor(
+                requestor.getId(), PAGE_0, DEFAULT_PAGE_SIZE);
+
+        List<RequestItemResponseDto> secondPage = requestItemService.getAllRequestItemByRequestor(
+                requestor.getId(), PAGE_1, DEFAULT_PAGE_SIZE);
 
         // Then
-        assertEquals(pageSize, firstPage.size()); // 10 на первой странице
-        assertEquals(5, secondPage.size());  // 5 на второй странице
+        assertEquals(10, firstPage.size()); // 10 на первой странице
+        assertEquals(5, secondPage.size()); // 5 на второй
     }
 }

@@ -42,6 +42,9 @@ class BookingServiceImplIntegrationTest {
     @Autowired
     private BookingRepository bookingRepository;
 
+    private static final int PAGE = 0;
+    private static final int SIZE = 10;
+
     private User createUser(String name, String email) {
         NewUserDto newUserDto = new NewUserDto();
         newUserDto.setName(name);
@@ -83,11 +86,8 @@ class BookingServiceImplIntegrationTest {
         Booking booking1 = createBooking(booker, item, now.plusDays(1), now.plusDays(2), Status.APPROVED);
         Booking booking2 = createBooking(booker, item, now.plusDays(3), now.plusDays(4), Status.WAITING);
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.ALL, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.ALL, PAGE, SIZE);
 
         // Then
         assertNotNull(result);
@@ -102,11 +102,8 @@ class BookingServiceImplIntegrationTest {
         // Given
         User owner = createUser("No Items Owner", "no-items@test.com");
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.ALL, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.ALL, PAGE, SIZE);
 
         // Then
         assertNotNull(result);
@@ -126,11 +123,8 @@ class BookingServiceImplIntegrationTest {
         Booking waitingBooking = createBooking(booker, item, now.plusDays(1), now.plusDays(2), Status.WAITING);
         Booking approvedBooking = createBooking(booker, item, now.plusDays(3), now.plusDays(4), Status.APPROVED);
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.WAITING, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.WAITING, PAGE, SIZE);
 
         // Then
         assertNotNull(result);
@@ -190,11 +184,8 @@ class BookingServiceImplIntegrationTest {
                 Status.APPROVED
         );
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.PAST, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.PAST, PAGE, SIZE);
 
         // Then
         assertNotNull(result, "Результат не должен быть null");
@@ -209,7 +200,6 @@ class BookingServiceImplIntegrationTest {
                 "Результат не должен содержать бронирований с началом в будущем"
         );
     }
-
 
     @Test
     @DisplayName("Возвращает текущие бронирования")
@@ -237,11 +227,8 @@ class BookingServiceImplIntegrationTest {
                 Status.APPROVED
         );
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.CURRENT, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.CURRENT, PAGE, SIZE);
 
         // Then
         assertNotNull(result);
@@ -261,12 +248,10 @@ class BookingServiceImplIntegrationTest {
     void getBookingsForOwner_Should_Throw_Exception_When_Owner_Not_Exists_Test() {
         // Given
         Long nonExistentOwnerId = 999L;
-        int page = 0;
-        int size = 10;
 
         // When & Then
         assertThrows(NotFoundException.class, () ->
-                bookingService.getBookingsForOwner(nonExistentOwnerId, BookingState.ALL, page, size)
+                bookingService.getBookingsForOwner(nonExistentOwnerId, BookingState.ALL, PAGE, SIZE)
         );
     }
 
@@ -283,11 +268,8 @@ class BookingServiceImplIntegrationTest {
         Booking rejectedBooking = createBooking(booker, item, now.plusDays(1), now.plusDays(2), Status.REJECTED);
         createBooking(booker, item, now.plusDays(3), now.plusDays(4), Status.APPROVED);
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.REJECTED, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.REJECTED, PAGE, SIZE);
 
         // Then
         assertNotNull(result);
@@ -309,11 +291,8 @@ class BookingServiceImplIntegrationTest {
         Booking futureBooking = createBooking(booker, item, now.plusDays(5), now.plusDays(7), Status.APPROVED);
         createBooking(booker, item, now.minusDays(2), now.minusDays(1), Status.APPROVED);
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.FUTURE, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.FUTURE, PAGE, SIZE);
 
         // Then
         assertNotNull(result);
@@ -337,11 +316,8 @@ class BookingServiceImplIntegrationTest {
         Booking booking1 = createBooking(booker, item1, now.plusDays(1), now.plusDays(2), Status.APPROVED);
         Booking booking2 = createBooking(booker, item2, now.plusDays(3), now.plusDays(4), Status.WAITING);
 
-        int page = 0;
-        int size = 10;
-
         // When
-        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.ALL, page, size);
+        List<Booking> result = bookingService.getBookingsForOwner(owner.getId(), BookingState.ALL, PAGE, SIZE);
 
         // Then
         assertNotNull(result);

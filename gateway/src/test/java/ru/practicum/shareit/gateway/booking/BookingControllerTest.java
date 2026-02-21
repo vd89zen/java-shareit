@@ -32,115 +32,110 @@ class BookingControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+    private static final long BOOKING_ID = 1L;
+    private static final int PAGE = 0;
+    private static final int SIZE = 10;
+
     @Test
     @DisplayName("Создание бронирования — успешный ответ")
     void createBooking_Should_Return_Created_Test() throws Exception {
         // Given
-        long userId = 1L;
         NewBookingDto newBookingDto = new NewBookingDto();
         newBookingDto.setStart(LocalDateTime.now().plusDays(1));
         newBookingDto.setEnd(LocalDateTime.now().plusDays(2));
         newBookingDto.setItemId(1L);
 
-        when(bookingClient.createBooking(eq(userId), any(NewBookingDto.class)))
+        when(bookingClient.createBooking(eq(USER_ID), any(NewBookingDto.class)))
                 .thenReturn(ResponseEntity.ok().build());
 
         // When & Then
         mockMvc.perform(post("/bookings")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newBookingDto)))
                 .andExpect(status().isOk());
 
-        verify(bookingClient, times(1)).createBooking(eq(userId), any(NewBookingDto.class));
+        verify(bookingClient, times(1)).createBooking(eq(USER_ID), any(NewBookingDto.class));
     }
 
     @Test
     @DisplayName("Подтверждение/отклонение бронирования — успешный ответ")
     void approveOrRejectBooking_Should_Return_Updated_Booking_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long bookingId = 1L;
         boolean approved = true;
 
-        when(bookingClient.approveOrRejectBooking(eq(userId), eq(bookingId), eq(approved)))
+        when(bookingClient.approveOrRejectBooking(eq(USER_ID), eq(BOOKING_ID), eq(approved)))
                 .thenReturn(ResponseEntity.ok().body("Updated booking"));
 
         // When & Then
-        mockMvc.perform(patch("/bookings/{bookingId}", bookingId)
-                        .header("X-Sharer-User-Id", userId)
+        mockMvc.perform(patch("/bookings/{bookingId}", BOOKING_ID)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .param("approved", String.valueOf(approved)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Updated booking"));
 
-        verify(bookingClient, times(1)).approveOrRejectBooking(eq(userId), eq(bookingId), eq(approved));
+        verify(bookingClient, times(1))
+                .approveOrRejectBooking(eq(USER_ID), eq(BOOKING_ID), eq(approved));
     }
 
     @Test
     @DisplayName("Получение бронирования по ID — успешный ответ")
     void getBooking_Should_Return_Booking_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long bookingId = 1L;
-
-        when(bookingClient.getBooking(eq(userId), eq(bookingId)))
+        when(bookingClient.getBooking(eq(USER_ID), eq(BOOKING_ID)))
                 .thenReturn(ResponseEntity.ok().body("Booking data"));
 
         // When & Then
-        mockMvc.perform(get("/bookings/{bookingId}", bookingId)
-                        .header("X-Sharer-User-Id", userId))
+        mockMvc.perform(get("/bookings/{bookingId}", BOOKING_ID)
+                        .header("X-Sharer-User-Id", USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Booking data"));
 
-        verify(bookingClient, times(1)).getBooking(eq(userId), eq(bookingId));
+        verify(bookingClient, times(1)).getBooking(eq(USER_ID), eq(BOOKING_ID));
     }
 
     @Test
     @DisplayName("Получение бронирований для букера — успешный ответ с пагинацией")
     void getBookingsForBooker_Should_Return_All_Bookings_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
         String stateParam = "all";
-        int page = 0;
-        int size = 10;
 
-        when(bookingClient.getBookingsForBooker(eq(userId), eq(BookingState.ALL), eq(page), eq(size)))
+        when(bookingClient.getBookingsForBooker(eq(USER_ID), eq(BookingState.ALL), eq(PAGE), eq(SIZE)))
                 .thenReturn(ResponseEntity.ok().body("[\"Booking1\", \"Booking2\"]"));
 
         // When & Then
         mockMvc.perform(get("/bookings")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .param("state", stateParam)
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[\"Booking1\", \"Booking2\"]"));
 
-        verify(bookingClient, times(1)).getBookingsForBooker(eq(userId), eq(BookingState.ALL), eq(page), eq(size));
+        verify(bookingClient, times(1))
+                .getBookingsForBooker(eq(USER_ID), eq(BookingState.ALL), eq(PAGE), eq(SIZE));
     }
 
     @Test
     @DisplayName("Получение бронирований для владельца — успешный ответ с пагинацией")
     void getBookingsForOwner_Should_Return_All_Bookings_For_Owner_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
         String stateParam = "waiting";
-        int page = 0;
-        int size = 10;
 
-        when(bookingClient.getBookingsForOwner(eq(userId), eq(BookingState.WAITING), eq(page), eq(size)))
+        when(bookingClient.getBookingsForOwner(eq(USER_ID), eq(BookingState.WAITING), eq(PAGE), eq(SIZE)))
                 .thenReturn(ResponseEntity.ok().body("[\"OwnerBooking1\", \"OwnerBooking2\"]"));
 
         // When & Then
         mockMvc.perform(get("/bookings/owner")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .param("state", stateParam)
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[\"OwnerBooking1\", \"OwnerBooking2\"]"));
 
-        verify(bookingClient, times(1)).getBookingsForOwner(eq(userId), eq(BookingState.WAITING), eq(page), eq(size));
+        verify(bookingClient, times(1))
+                .getBookingsForOwner(eq(USER_ID), eq(BookingState.WAITING), eq(PAGE), eq(SIZE));
     }
-
 }

@@ -21,14 +21,23 @@ class NewBookingDtoJsonTest {
     private final ObjectMapper objectMapper;
     private final JacksonTester<NewBookingDto> json;
 
+    private NewBookingDto createNewBookingDto(Long itemId, LocalDateTime start, LocalDateTime end) {
+        NewBookingDto bookingDto = new NewBookingDto();
+        bookingDto.setItemId(itemId);
+        bookingDto.setStart(start);
+        bookingDto.setEnd(end);
+        return bookingDto;
+    }
+
     @Test
     @DisplayName("Сериализация NewBookingDto в JSON — все поля заполнены")
     void serialize_NewBookingDto_With_All_Fields_Filled_Should_Produce_Valid_Json_Test() throws Exception {
         // Given
-        NewBookingDto newBookingDto = new NewBookingDto();
-        newBookingDto.setItemId(123L);
-        newBookingDto.setStart(LocalDateTime.now().plusDays(1));
-        newBookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        NewBookingDto newBookingDto = createNewBookingDto(
+                123L,
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2)
+        );
 
         // When
         JsonContent<NewBookingDto> result = json.write(newBookingDto);
@@ -54,10 +63,7 @@ class NewBookingDtoJsonTest {
         LocalDateTime start = LocalDateTime.now().plusDays(1);
         LocalDateTime end = LocalDateTime.now().plusDays(2);
 
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(456L);
-        dto.setStart(start);
-        dto.setEnd(end);
+        NewBookingDto dto = createNewBookingDto(456L, start, end);
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -73,10 +79,11 @@ class NewBookingDtoJsonTest {
     @DisplayName("Десериализация с itemId = 0 — должно создать объект с itemId = 0")
     void deserialize_Json_With_ItemId_Zero_Should_Create_Object_Test() throws Exception {
         // Given
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(0L);
-        dto.setStart(LocalDateTime.now().plusHours(1));
-        dto.setEnd(LocalDateTime.now().plusHours(2));
+        NewBookingDto dto = createNewBookingDto(
+                0L,
+                LocalDateTime.now().plusHours(1),
+                LocalDateTime.now().plusHours(2)
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -93,10 +100,7 @@ class NewBookingDtoJsonTest {
         LocalDateTime pastStart = LocalDateTime.now().minusDays(2);
         LocalDateTime pastEnd = LocalDateTime.now().minusDays(1);
 
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(789L);
-        dto.setStart(pastStart);
-        dto.setEnd(pastEnd);
+        NewBookingDto dto = createNewBookingDto(789L, pastStart, pastEnd);
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -112,10 +116,11 @@ class NewBookingDtoJsonTest {
     @DisplayName("Десериализация с start = null — должно создать объект с null start")
     void deserialize_Json_With_Start_Null_Should_Create_Object_With_Null_Start_Test() throws Exception {
         // Given
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(111L);
-        dto.setStart(null);
-        dto.setEnd(LocalDateTime.now().plusDays(1));
+        NewBookingDto dto = createNewBookingDto(
+                111L,
+                null,
+                LocalDateTime.now().plusDays(1)
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -131,10 +136,11 @@ class NewBookingDtoJsonTest {
     @DisplayName("Десериализация с end = null — должно создать объект с null end")
     void deserialize_Json_With_End_Null_Should_Create_Object_With_Null_End_Test() throws Exception {
         // Given
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(222L);
-        dto.setStart(LocalDateTime.now().plusDays(1));
-        dto.setEnd(null);
+        NewBookingDto dto = createNewBookingDto(
+                222L,
+                LocalDateTime.now().plusDays(1),
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -150,10 +156,7 @@ class NewBookingDtoJsonTest {
     @DisplayName("Сериализация объекта с null датами — поля start и end должны быть null в JSON")
     void serialize_NewBookingDto_With_Null_Dates_Should_Include_Null_In_Json_Test() throws Exception {
         // Given
-        NewBookingDto newBookingDto = new NewBookingDto();
-        newBookingDto.setItemId(333L);
-        newBookingDto.setStart(null);
-        newBookingDto.setEnd(null);
+        NewBookingDto newBookingDto = createNewBookingDto(333L, null, null);
 
         // When
         JsonContent<NewBookingDto> result = json.write(newBookingDto);
@@ -178,10 +181,7 @@ class NewBookingDtoJsonTest {
         // Given
         LocalDateTime sameDate = LocalDateTime.now().plusDays(3);
 
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(444L);
-        dto.setStart(sameDate);
-        dto.setEnd(sameDate);
+        NewBookingDto dto = createNewBookingDto(444L, sameDate, sameDate);
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -200,10 +200,7 @@ class NewBookingDtoJsonTest {
         LocalDateTime laterStart = LocalDateTime.now().plusDays(2);
         LocalDateTime earlierEnd = LocalDateTime.now().plusDays(1);
 
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(555L);
-        dto.setStart(laterStart);
-        dto.setEnd(earlierEnd);
+        NewBookingDto dto = createNewBookingDto(555L, laterStart, earlierEnd);
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -224,10 +221,7 @@ class NewBookingDtoJsonTest {
         LocalDateTime preciseEnd = LocalDateTime.of(
                 2024, 3, 16, 10, 15, 30, 987654321);
 
-        NewBookingDto originalDto = new NewBookingDto();
-        originalDto.setItemId(666L);
-        originalDto.setStart(preciseStart);
-        originalDto.setEnd(preciseEnd);
+        NewBookingDto originalDto = createNewBookingDto(666L, preciseStart, preciseEnd);
 
         // When
         String jsonString = objectMapper.writeValueAsString(originalDto);
@@ -239,7 +233,6 @@ class NewBookingDtoJsonTest {
         assertThat(resultDto.getEnd()).isEqualTo(preciseEnd);
     }
 
-
     @Test
     @DisplayName("Десериализация даты в стандартном формате ISO")
     void deserialize_Json_With_Iso_Date_Format_Should_Process_Correctly_Test() throws Exception {
@@ -247,10 +240,11 @@ class NewBookingDtoJsonTest {
         String isoStart = "2024-12-25T10:30:00";
         String isoEnd = "2024-12-30T18:45:00";
 
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(777L);
-        dto.setStart(LocalDateTime.parse(isoStart));
-        dto.setEnd(LocalDateTime.parse(isoEnd));
+        NewBookingDto dto = createNewBookingDto(
+                777L,
+                LocalDateTime.parse(isoStart),
+                LocalDateTime.parse(isoEnd)
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -268,10 +262,11 @@ class NewBookingDtoJsonTest {
     @DisplayName("Десериализация с нулевым itemId — должно корректно обработать")
     void deserialize_Json_With_Zero_ItemId_Should_Create_Object_Test() throws Exception {
         // Given
-        NewBookingDto dto = new NewBookingDto();
-        dto.setItemId(0L);
-        dto.setStart(LocalDateTime.now().plusHours(1));
-        dto.setEnd(LocalDateTime.now().plusHours(3));
+        NewBookingDto dto = createNewBookingDto(
+                0L,
+                LocalDateTime.now().plusHours(1),
+                LocalDateTime.now().plusHours(3)
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -287,10 +282,11 @@ class NewBookingDtoJsonTest {
     @DisplayName("Сериализация объекта с максимально возможным itemId")
     void serialize_NewBookingDto_With_Max_ItemId_Should_Produce_Valid_Json_Test() throws Exception {
         // Given
-        NewBookingDto newBookingDto = new NewBookingDto();
-        newBookingDto.setItemId(Long.MAX_VALUE);
-        newBookingDto.setStart(LocalDateTime.now().plusYears(1));
-        newBookingDto.setEnd(LocalDateTime.now().plusYears(2));
+        NewBookingDto newBookingDto = createNewBookingDto(
+                Long.MAX_VALUE,
+                LocalDateTime.now().plusYears(1),
+                LocalDateTime.now().plusYears(2)
+        );
 
         // When
         JsonContent<NewBookingDto> result = json.write(newBookingDto);

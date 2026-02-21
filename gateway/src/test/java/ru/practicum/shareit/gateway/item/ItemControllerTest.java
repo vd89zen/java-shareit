@@ -31,106 +31,101 @@ class ItemControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+    private static final long ITEM_ID = 1L;
+    private static final int PAGE = 0;
+    private static final int SIZE = 10;
+
     @Test
     @DisplayName("Создание вещи — успешный ответ")
     void createItem_Should_Return_Created_Test() throws Exception {
         // Given
-        long userId = 1L;
         NewItemDto newItemDto = new NewItemDto();
         newItemDto.setName("Test Item");
         newItemDto.setDescription("Test description");
         newItemDto.setAvailable(true);
         newItemDto.setRequestId(null);
 
-        when(itemClient.createItem(eq(userId), any(NewItemDto.class)))
+        when(itemClient.createItem(eq(USER_ID), any(NewItemDto.class)))
                 .thenReturn(ResponseEntity.ok().build());
 
         // When & Then
         mockMvc.perform(post("/items")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newItemDto)))
                 .andExpect(status().isOk());
 
-        verify(itemClient, times(1)).createItem(eq(userId), any(NewItemDto.class));
+        verify(itemClient, times(1)).createItem(eq(USER_ID), any(NewItemDto.class));
     }
 
     @Test
     @DisplayName("Получение вещи по ID — успешный ответ")
     void getItemById_Should_Return_Item_Test() throws Exception {
         // Given
-        Long itemId = 1L;
-        when(itemClient.getItemById(itemId))
+        when(itemClient.getItemById(ITEM_ID))
                 .thenReturn(ResponseEntity.ok().body("Item data"));
 
         // When & Then
-        mockMvc.perform(get("/items/{itemId}", itemId))
+        mockMvc.perform(get("/items/{itemId}", ITEM_ID))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Item data"));
 
-        verify(itemClient, times(1)).getItemById(itemId);
+        verify(itemClient, times(1)).getItemById(ITEM_ID);
     }
 
     @Test
     @DisplayName("Получение всех вещей владельца — успешный ответ с пагинацией")
     void getAllItemForOwner_Should_Return_All_Items_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
-        int page = 0;
-        int size = 10;
-
-        when(itemClient.getAllItemForOwner(eq(userId), eq(page), eq(size)))
+        when(itemClient.getAllItemForOwner(eq(USER_ID), eq(PAGE), eq(SIZE)))
                 .thenReturn(ResponseEntity.ok().body("[\"Item1\", \"Item2\"]"));
 
         // When & Then
         mockMvc.perform(get("/items")
-                        .header("X-Sharer-User-Id", userId)
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .header("X-Sharer-User-Id", USER_ID)
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[\"Item1\", \"Item2\"]"));
 
-        verify(itemClient, times(1)).getAllItemForOwner(eq(userId), eq(page), eq(size));
+        verify(itemClient, times(1)).getAllItemForOwner(eq(USER_ID), eq(PAGE), eq(SIZE));
     }
 
     @Test
     @DisplayName("Обновление вещи по ID — успешный ответ")
     void updateItemById_Should_Return_Updated_Item_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long itemId = 1L;
         ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
         itemUpdateDto.setName("Updated Name");
 
-        when(itemClient.updateItemById(eq(userId), eq(itemId), any(ItemUpdateDto.class)))
+        when(itemClient.updateItemById(eq(USER_ID), eq(ITEM_ID), any(ItemUpdateDto.class)))
                 .thenReturn(ResponseEntity.ok().body("Updated item"));
 
         // When & Then
-        mockMvc.perform(patch("/items/{itemId}", itemId)
-                        .header("X-Sharer-User-Id", userId)
+        mockMvc.perform(patch("/items/{itemId}", ITEM_ID)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(itemUpdateDto)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Updated item"));
 
-        verify(itemClient, times(1)).updateItemById(eq(userId), eq(itemId), any(ItemUpdateDto.class));
+        verify(itemClient, times(1)).updateItemById(eq(USER_ID), eq(ITEM_ID), any(ItemUpdateDto.class));
     }
 
     @Test
     @DisplayName("Удаление вещи по ID — успешный ответ (No Content)")
     void deleteItemById_Should_Return_No_Content_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long itemId = 1L;
-        when(itemClient.deleteItemById(eq(userId), eq(itemId)))
+        when(itemClient.deleteItemById(eq(USER_ID), eq(ITEM_ID)))
                 .thenReturn(ResponseEntity.noContent().build());
 
         // When & Then
-        mockMvc.perform(delete("/items/{itemId}", itemId)
-                        .header("X-Sharer-User-Id", userId))
+        mockMvc.perform(delete("/items/{itemId}", ITEM_ID)
+                        .header("X-Sharer-User-Id", USER_ID))
                 .andExpect(status().isNoContent());
 
-        verify(itemClient, times(1)).deleteItemById(eq(userId), eq(itemId));
+        verify(itemClient, times(1)).deleteItemById(eq(USER_ID), eq(ITEM_ID));
     }
 
     @Test
@@ -154,22 +149,20 @@ class ItemControllerTest {
     @DisplayName("Добавление комментария к вещи — успешный ответ")
     void commentItemById_Should_Return_Comment_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long itemId = 1L;
         NewCommentDto newCommentDto = new NewCommentDto();
         newCommentDto.setText("Test comment");
 
-        when(itemClient.commentItemById(eq(userId), eq(itemId), any(NewCommentDto.class)))
+        when(itemClient.commentItemById(eq(USER_ID), eq(ITEM_ID), any(NewCommentDto.class)))
                 .thenReturn(ResponseEntity.ok().body("Created comment"));
 
         // When & Then
-        mockMvc.perform(post("/items/{itemId}/comment", itemId)
-                        .header("X-Sharer-User-Id", userId)
+        mockMvc.perform(post("/items/{itemId}/comment", ITEM_ID)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newCommentDto)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Created comment"));
 
-        verify(itemClient, times(1)).commentItemById(eq(userId), eq(itemId), any(NewCommentDto.class));
+        verify(itemClient, times(1)).commentItemById(eq(USER_ID), eq(ITEM_ID), any(NewCommentDto.class));
     }
 }

@@ -36,229 +36,202 @@ class BookingControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+    private static final long BOOKING_ID = 1L;
+    private static final int PAGE = 0;
+    private static final int SIZE = 10;
+
+    private NewBookingDto createNewBookingDto() {
+        NewBookingDto dto = new NewBookingDto();
+        dto.setStart(LocalDateTime.now().plusDays(1));
+        dto.setEnd(LocalDateTime.now().plusDays(2));
+        dto.setItemId(1L);
+        return dto;
+    }
+
+    private ItemResponseDto createItemResponseDto(long id, String name, String description, boolean available) {
+        return ItemResponseDto.builder()
+                .id(id)
+                .name(name)
+                .description(description)
+                .available(available)
+                .build();
+    }
+
+    private UserResponseDto createUserResponseDto(long id, String name, String email) {
+        return UserResponseDto.builder()
+                .id(id)
+                .name(name)
+                .email(email)
+                .build();
+    }
+
+    private BookingResponseDto createBookingResponseDto(
+            long id, LocalDateTime start, LocalDateTime end,
+            ItemResponseDto item, UserResponseDto booker, String status) {
+        return BookingResponseDto.builder()
+                .id(id)
+                .start(start)
+                .end(end)
+                .item(item)
+                .booker(booker)
+                .status(status)
+                .build();
+    }
+
+    private List<Booking> createMockBookingList() {
+        return List.of(new Booking(), new Booking());
+    }
+
     @Test
     @DisplayName("Создание брони — успешный ответ")
     void createBooking_Should_Return_Created_Test() throws Exception {
         // Given
-        long userId = 1L;
-        NewBookingDto newBookingDto = new NewBookingDto();
-        newBookingDto.setStart(LocalDateTime.now().plusDays(1));
-        newBookingDto.setEnd(LocalDateTime.now().plusDays(2));
-        newBookingDto.setItemId(1L);
+        NewBookingDto newBookingDto = createNewBookingDto();
 
-        ItemResponseDto itemResponseDto = ItemResponseDto.builder()
-                .id(1L)
-                .name("Test Item")
-                .description("Test description")
-                .available(true)
-                .build();
+        ItemResponseDto itemResponseDto = createItemResponseDto(
+                1L, "Test Item", "Test description", true);
 
-        UserResponseDto bookerResponseDto = UserResponseDto.builder()
-                .id(userId)
-                .name("Test User")
-                .email("user@test.com")
-                .build();
+        UserResponseDto bookerResponseDto = createUserResponseDto(
+                USER_ID, "Test User", "user@test.com");
 
-        BookingResponseDto bookingResponseDto = BookingResponseDto.builder()
-                .id(1L)
-                .start(newBookingDto.getStart())
-                .end(newBookingDto.getEnd())
-                .item(itemResponseDto)
-                .booker(bookerResponseDto)
-                .status("WAITING")
-                .build();
+        BookingResponseDto bookingResponseDto = createBookingResponseDto(
+                BOOKING_ID, newBookingDto.getStart(), newBookingDto.getEnd(),
+                itemResponseDto, bookerResponseDto, "WAITING");
 
-        when(bookingService.createBooking(eq(userId), any(NewBookingDto.class)))
+        when(bookingService.createBooking(eq(USER_ID), any(NewBookingDto.class)))
                 .thenReturn(new Booking());
         when(bookingService.getBookingResponseDto(any(Booking.class)))
                 .thenReturn(bookingResponseDto);
 
         // When & Then
         mockMvc.perform(post("/bookings")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newBookingDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.id").value(BOOKING_ID))
                 .andExpect(jsonPath("$.status").value("WAITING"))
                 .andExpect(jsonPath("$.start").exists())
                 .andExpect(jsonPath("$.end").exists())
                 .andExpect(jsonPath("$.item.id").value(1L))
                 .andExpect(jsonPath("$.item.name").value("Test Item"))
-                .andExpect(jsonPath("$.booker.id").value(userId))
+                .andExpect(jsonPath("$.booker.id").value(USER_ID))
                 .andExpect(jsonPath("$.booker.name").value("Test User"));
 
-        verify(bookingService, times(1)).createBooking(eq(userId), any(NewBookingDto.class));
+        verify(bookingService, times(1)).createBooking(eq(USER_ID), any(NewBookingDto.class));
     }
 
     @Test
     @DisplayName("Подтверждение/отказ брони — успешный ответ")
     void approveOrRejectBookingById_Should_Return_Updated_Booking_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long bookingId = 1L;
         boolean approved = true;
 
-        ItemResponseDto itemResponseDto = ItemResponseDto.builder()
-                .id(1L)
-                .name("Booked Item")
-                .description("Item for booking")
-                .available(false)
-                .build();
+        ItemResponseDto itemResponseDto = createItemResponseDto(
+                1L, "Booked Item", "Item for booking", false);
 
-        UserResponseDto bookerResponseDto = UserResponseDto.builder()
-                .id(2L)
-                .name("Booker User")
-                .email("booker@test.com")
-                .build();
+        UserResponseDto bookerResponseDto = createUserResponseDto(
+                2L, "Booker User", "booker@test.com");
 
-        BookingResponseDto updatedBookingResponseDto = BookingResponseDto.builder()
-                .id(bookingId)
-                .start(LocalDateTime.now().plusDays(1))
-                .end(LocalDateTime.now().plusDays(2))
-                .item(itemResponseDto)
-                .booker(bookerResponseDto)
-                .status(approved ? "APPROVED" : "REJECTED")
-                .build();
+        BookingResponseDto updatedBookingResponseDto = createBookingResponseDto(
+                BOOKING_ID, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2),
+                itemResponseDto, bookerResponseDto, approved ? "APPROVED" : "REJECTED");
 
-        when(bookingService.approveOrRejectBookingById(eq(userId), eq(bookingId), eq(approved)))
+        when(bookingService.approveOrRejectBookingById(eq(USER_ID), eq(BOOKING_ID), eq(approved)))
                 .thenReturn(new Booking());
         when(bookingService.getBookingResponseDto(any(Booking.class)))
                 .thenReturn(updatedBookingResponseDto);
 
         // When & Then
-        mockMvc.perform(patch("/bookings/{bookingId}", bookingId)
-                        .header("X-Sharer-User-Id", userId)
+        mockMvc.perform(patch("/bookings/{bookingId}", BOOKING_ID)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .param("approved", String.valueOf(approved)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(bookingId))
+                .andExpect(jsonPath("$.id").value(BOOKING_ID))
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.item.id").value(1L))
                 .andExpect(jsonPath("$.booker.id").value(2L));
 
-        verify(bookingService, times(1)).approveOrRejectBookingById(eq(userId), eq(bookingId), eq(approved));
+        verify(bookingService, times(1)).approveOrRejectBookingById(eq(USER_ID), eq(BOOKING_ID), eq(approved));
     }
 
     @Test
     @DisplayName("Получение брони по ID с проверкой доступа — успешный ответ")
     void getBookingByIdWithAccessCheck_Should_Return_Booking_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long bookingId = 1L;
+        ItemResponseDto itemResponseDto = createItemResponseDto(
+                1L, "Access Item", "Item with access", true);
 
-        ItemResponseDto itemResponseDto = ItemResponseDto.builder()
-                .id(1L)
-                .name("Access Item")
-                .description("Item with access")
-                .available(true)
-                .build();
+        UserResponseDto bookerResponseDto = createUserResponseDto(
+                3L, "Access User", "access@test.com");
 
-        UserResponseDto bookerResponseDto = UserResponseDto.builder()
-                .id(3L)
-                .name("Access User")
-                .email("access@test.com")
-                .build();
+        BookingResponseDto bookingResponseDto = createBookingResponseDto(
+                BOOKING_ID, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2),
+                itemResponseDto, bookerResponseDto, "WAITING");
 
-        BookingResponseDto bookingResponseDto = BookingResponseDto.builder()
-                .id(bookingId)
-                .start(LocalDateTime.now().plusDays(1))
-                .end(LocalDateTime.now().plusDays(2))
-                .item(itemResponseDto)
-                .booker(bookerResponseDto)
-                .status("WAITING")
-                .build();
-
-        when(bookingService.getBookingByIdWithAccessCheck(eq(userId), eq(bookingId)))
+        when(bookingService.getBookingByIdWithAccessCheck(eq(USER_ID), eq(BOOKING_ID)))
                 .thenReturn(new Booking());
         when(bookingService.getBookingResponseDto(any(Booking.class)))
                 .thenReturn(bookingResponseDto);
 
         // When & Then
-        mockMvc.perform(get("/bookings/{bookingId}", bookingId)
-                        .header("X-Sharer-User-Id", userId))
+        mockMvc.perform(get("/bookings/{bookingId}", BOOKING_ID)
+                        .header("X-Sharer-User-Id", USER_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(bookingId))
+                .andExpect(jsonPath("$.id").value(BOOKING_ID))
                 .andExpect(jsonPath("$.status").value("WAITING"))
                 .andExpect(jsonPath("$.item.id").value(1L))
                 .andExpect(jsonPath("$.booker.id").value(3L))
                 .andExpect(jsonPath("$.start").exists())
                 .andExpect(jsonPath("$.end").exists());
 
-        verify(bookingService, times(1)).getBookingByIdWithAccessCheck(eq(userId), eq(bookingId));
+        verify(bookingService, times(1)).getBookingByIdWithAccessCheck(eq(USER_ID), eq(BOOKING_ID));
     }
+
 
     @Test
     @DisplayName("Получение всех броней для арендатора — успешный ответ с пагинацией")
     void getBookingsForBooker_Should_Return_All_Bookings_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
         BookingState state = BookingState.ALL;
-        int page = 0;
-        int size = 10;
 
-        ItemResponseDto item1 = ItemResponseDto.builder()
-                .id(1L)
-                .name("Laptop")
-                .description("Gaming laptop")
-                .available(true)
-                .build();
+        ItemResponseDto item1 = createItemResponseDto(
+                1L, "Laptop", "Gaming laptop", true);
+        UserResponseDto booker1 = createUserResponseDto(
+                USER_ID, "Ivan Ivanov", "ivan@test.com");
+        BookingResponseDto booking1 = createBookingResponseDto(
+                1L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2),
+                item1, booker1, "APPROVED");
 
-        UserResponseDto booker1 = UserResponseDto.builder()
-                .id(userId)
-                .name("Ivan Ivanov")
-                .email("ivan@test.com")
-                .build();
 
-        BookingResponseDto booking1 = BookingResponseDto.builder()
-                .id(1L)
-                .start(LocalDateTime.now().plusDays(1))
-                .end(LocalDateTime.now().plusDays(2))
-                .item(item1)
-                .booker(booker1)
-                .status("APPROVED")
-                .build();
-
-        ItemResponseDto item2 = ItemResponseDto.builder()
-                .id(2L)
-                .name("Phone")
-                .description("Smartphone")
-                .available(false)
-                .build();
-
-        UserResponseDto booker2 = UserResponseDto.builder()
-                .id(2L)
-                .name("Petr Petrov")
-                .email("petr@test.com")
-                .build();
-
-        BookingResponseDto booking2 = BookingResponseDto.builder()
-                .id(2L)
-                .start(LocalDateTime.now().plusDays(3))
-                .end(LocalDateTime.now().plusDays(4))
-                .item(item2)
-                .booker(booker2)
-                .status("WAITING")
-                .build();
+        ItemResponseDto item2 = createItemResponseDto(
+                2L, "Phone", "Smartphone", false);
+        UserResponseDto booker2 = createUserResponseDto(
+                2L, "Petr Petrov", "petr@test.com");
+        BookingResponseDto booking2 = createBookingResponseDto(
+                2L, LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(4),
+                item2, booker2, "WAITING");
 
         List<BookingResponseDto> bookings = List.of(booking1, booking2);
 
-        when(bookingService.getBookingsForBooker(eq(userId), eq(state), eq(page), eq(size)))
-                .thenReturn(List.of(new Booking(), new Booking()));
+        when(bookingService.getBookingsForBooker(eq(USER_ID), eq(state), eq(PAGE), eq(SIZE)))
+                .thenReturn(createMockBookingList());
         when(bookingService.getListBookingResponseDto(any(List.class)))
                 .thenReturn(bookings);
 
         // When & Then
         mockMvc.perform(get("/bookings")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .param("state", state.name())
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].status").value("APPROVED"))
                 .andExpect(jsonPath("$[0].item.id").value(1L))
                 .andExpect(jsonPath("$[0].item.name").value("Laptop"))
-                .andExpect(jsonPath("$[0].booker.id").value(userId))
+                .andExpect(jsonPath("$[0].booker.id").value(USER_ID))
                 .andExpect(jsonPath("$[0].booker.name").value("Ivan Ivanov"))
                 .andExpect(jsonPath("$[1].id").value(2L))
                 .andExpect(jsonPath("$[1].status").value("WAITING"))
@@ -271,75 +244,44 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$[1].start").exists())
                 .andExpect(jsonPath("$[1].end").exists());
 
-        verify(bookingService, times(1)).getBookingsForBooker(eq(userId), eq(state), eq(page), eq(size));
+        verify(bookingService, times(1)).getBookingsForBooker(eq(USER_ID), eq(state), eq(PAGE), eq(SIZE));
     }
 
     @Test
     @DisplayName("Получение всех броней для владельца — успешный ответ с пагинацией")
     void getBookingsForOwner_Should_Return_All_Bookings_For_Owner_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
         BookingState state = BookingState.CURRENT;
-        int page = 0;
-        int size = 10;
 
-        ItemResponseDto ownerItem1 = ItemResponseDto.builder()
-                .id(3L)
-                .name("Tablet")
-                .description("Digital tablet")
-                .available(true)
-                .build();
+        ItemResponseDto ownerItem1 = createItemResponseDto(
+                3L, "Tablet", "Digital tablet", true);
+        UserResponseDto ownerBooker1 = createUserResponseDto(
+                3L, "Sergey Sergeev", "sergey@test.com");
+        BookingResponseDto ownerBooking1 = createBookingResponseDto(
+                3L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
+                ownerItem1, ownerBooker1, "APPROVED");
 
-        UserResponseDto ownerBooker1 = UserResponseDto.builder()
-                .id(3L)
-                .name("Sergey Sergeev")
-                .email("sergey@test.com")
-                .build();
-
-        BookingResponseDto ownerBooking1 = BookingResponseDto.builder()
-                .id(3L)
-                .start(LocalDateTime.now().minusDays(1))
-                .end(LocalDateTime.now().plusDays(1))
-                .item(ownerItem1)
-                .booker(ownerBooker1)
-                .status("APPROVED")
-                .build();
-
-        ItemResponseDto ownerItem2 = ItemResponseDto.builder()
-                .id(4L)
-                .name("Camera")
-                .description("DSLR camera")
-                .available(false)
-                .build();
-
-        UserResponseDto ownerBooker2 = UserResponseDto.builder()
-                .id(4L)
-                .name("Anna Ananova")
-                .email("anna@test.com")
-                .build();
-
-        BookingResponseDto ownerBooking2 = BookingResponseDto.builder()
-                .id(4L)
-                .start(LocalDateTime.now().plusDays(5))
-                .end(LocalDateTime.now().plusDays(7))
-                .item(ownerItem2)
-                .booker(ownerBooker2)
-                .status("WAITING")
-                .build();
+        ItemResponseDto ownerItem2 = createItemResponseDto(
+                4L, "Camera", "DSLR camera", false);
+        UserResponseDto ownerBooker2 = createUserResponseDto(
+                4L, "Anna Ananova", "anna@test.com");
+        BookingResponseDto ownerBooking2 = createBookingResponseDto(
+                4L, LocalDateTime.now().plusDays(5), LocalDateTime.now().plusDays(7),
+                ownerItem2, ownerBooker2, "WAITING");
 
         List<BookingResponseDto> ownerBookings = List.of(ownerBooking1, ownerBooking2);
 
-        when(bookingService.getBookingsForOwner(eq(userId), eq(state), eq(page), eq(size)))
-                .thenReturn(List.of(new Booking(), new Booking()));
+        when(bookingService.getBookingsForOwner(eq(USER_ID), eq(state), eq(PAGE), eq(SIZE)))
+                .thenReturn(createMockBookingList());
         when(bookingService.getListBookingResponseDto(any(List.class)))
                 .thenReturn(ownerBookings);
 
         // When & Then
         mockMvc.perform(get("/bookings/owner")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .param("state", state.name())
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(3L))
                 .andExpect(jsonPath("$[0].status").value("APPROVED"))
@@ -358,6 +300,6 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$[1].start").exists())
                 .andExpect(jsonPath("$[1].end").exists());
 
-        verify(bookingService, times(1)).getBookingsForOwner(eq(userId), eq(state), eq(page), eq(size));
+        verify(bookingService, times(1)).getBookingsForOwner(eq(USER_ID), eq(state), eq(PAGE), eq(SIZE));
     }
 }

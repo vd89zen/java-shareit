@@ -30,6 +30,8 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+
     @Test
     @DisplayName("Создание пользователя — успешный ответ")
     void createUser_Should_Return_Created_Test() throws Exception {
@@ -52,16 +54,15 @@ class UserControllerTest {
     @DisplayName("Получение пользователя по ID — успешный ответ")
     void getUserById_Should_Return_User_Test() throws Exception {
         // Given
-        long userId = 1L;
-        when(userClient.findUserById(userId))
+        when(userClient.findUserById(USER_ID))
                 .thenReturn(ResponseEntity.ok().body("User data"));
 
         // When & Then
-        mockMvc.perform(get("/users/{userId}", userId))
+        mockMvc.perform(get("/users/{userId}", USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(content().string("User data"));
 
-        verify(userClient, times(1)).findUserById(userId);
+        verify(userClient, times(1)).findUserById(USER_ID);
     }
 
     @Test
@@ -83,35 +84,33 @@ class UserControllerTest {
     @DisplayName("Обновление пользователя — успешный ответ")
     void updateUser_Should_Return_Updated_User_Test() throws Exception {
         // Given
-        long userId = 1L;
         UserUpdateDto userUpdateDto = new UserUpdateDto();
         userUpdateDto.setName("Updated Name");
 
-        when(userClient.updateUser(eq(userId), any(UserUpdateDto.class)))
+        when(userClient.updateUser(eq(USER_ID), any(UserUpdateDto.class)))
                 .thenReturn(ResponseEntity.ok().body("Updated user"));
 
         // When & Then
-        mockMvc.perform(patch("/users/{userId}", userId)
+        mockMvc.perform(patch("/users/{userId}", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userUpdateDto)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Updated user"));
 
-        verify(userClient, times(1)).updateUser(eq(userId), any(UserUpdateDto.class));
+        verify(userClient, times(1)).updateUser(eq(USER_ID), any(UserUpdateDto.class));
     }
 
     @Test
     @DisplayName("Удаление пользователя по ID — успешный ответ (No Content)")
     void deleteUserById_Should_Return_No_Content_Test() throws Exception {
         // Given
-        long userId = 1L;
-        when(userClient.deleteUserById(userId))
+        when(userClient.deleteUserById(USER_ID))
                 .thenReturn(ResponseEntity.noContent().build());
 
         // When & Then
-        mockMvc.perform(delete("/users/{userId}", userId))
+        mockMvc.perform(delete("/users/{userId}", USER_ID))
                 .andExpect(status().isNoContent());
 
-        verify(userClient, times(1)).deleteUserById(userId);
+        verify(userClient, times(1)).deleteUserById(USER_ID);
     }
 }

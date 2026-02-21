@@ -12,6 +12,7 @@ import ru.practicum.shareit.server.item.dto.*;
 import ru.practicum.shareit.server.item.model.Comment;
 import ru.practicum.shareit.server.item.model.Item;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -32,30 +33,61 @@ class ItemControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+    private static final long ITEM_ID = 1L;
+
+    private ItemResponseDto createItemResponseDto(long id, String name, String description, boolean available) {
+        ItemResponseDto dto = new ItemResponseDto();
+        dto.setId(id);
+        dto.setName(name);
+        dto.setDescription(description);
+        dto.setAvailable(available);
+        return dto;
+    }
+
+    private ItemResponseForOwnerDto createItemResponseForOwnerDto(long id, String name, String description, boolean available) {
+        ItemResponseForOwnerDto dto = new ItemResponseForOwnerDto();
+        dto.setId(id);
+        dto.setName(name);
+        dto.setDescription(description);
+        dto.setAvailable(available);
+        return dto;
+    }
+
+    private CommentResponseDto createCommentResponseDto(long id, String text, String authorName, LocalDateTime created) {
+        CommentResponseDto dto = new CommentResponseDto();
+        dto.setId(id);
+        dto.setText(text);
+        dto.setAuthorName(authorName);
+        dto.setCreated(created);
+        return dto;
+    }
+
     @Test
     @DisplayName("Создание вещи — успешный ответ")
     void createItem_Should_Return_Created_Test() throws Exception {
         // Given
-        long userId = 1L;
         NewItemDto newItemDto = new NewItemDto();
         newItemDto.setName("Test Item");
         newItemDto.setDescription("Test description");
         newItemDto.setAvailable(true);
 
-        ItemResponseDto itemResponseDto = new ItemResponseDto();
-        itemResponseDto.setId(1L);
-        itemResponseDto.setName("Test Item");
-        itemResponseDto.setDescription("Test description");
-        itemResponseDto.setAvailable(true);
+        ItemResponseDto itemResponseDto = createItemResponseDto(
+                1L,
+                "Test Item",
+                "Test description",
+                true
+        );
 
-        when(itemService.createItem(eq(userId), any(NewItemDto.class)))
+
+        when(itemService.createItem(eq(USER_ID), any(NewItemDto.class)))
                 .thenReturn(new Item());
         when(itemService.getItemResponseDto(any(Item.class)))
                 .thenReturn(itemResponseDto);
 
         // When & Then
         mockMvc.perform(post("/items")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newItemDto)))
                 .andExpect(status().isCreated())
@@ -64,125 +96,122 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.description").value("Test description"))
                 .andExpect(jsonPath("$.available").value(true));
 
-        verify(itemService, times(1)).createItem(eq(userId), any(NewItemDto.class));
+        verify(itemService, times(1)).createItem(eq(USER_ID), any(NewItemDto.class));
     }
 
     @Test
     @DisplayName("Получение вещи по ID — успешный ответ")
     void getItemById_Should_Return_Item_Test() throws Exception {
         // Given
-        long itemId = 1L;
+        ItemResponseDto itemResponseDto = createItemResponseDto(
+                ITEM_ID,
+                "Existing Item",
+                "Existing description",
+                true
+        );
 
-        ItemResponseDto itemResponseDto = new ItemResponseDto();
-        itemResponseDto.setId(itemId);
-        itemResponseDto.setName("Existing Item");
-        itemResponseDto.setDescription("Existing description");
-        itemResponseDto.setAvailable(true);
 
-        when(itemService.getItemById(eq(itemId)))
+        when(itemService.getItemById(eq(ITEM_ID)))
                 .thenReturn(new Item());
         when(itemService.getItemResponseDto(any(Item.class)))
                 .thenReturn(itemResponseDto);
 
         // When & Then
-        mockMvc.perform(get("/items/{itemId}", itemId))
+        mockMvc.perform(get("/items/{itemId}", ITEM_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(itemId))
+                .andExpect(jsonPath("$.id").value(ITEM_ID))
                 .andExpect(jsonPath("$.name").value("Existing Item"))
                 .andExpect(jsonPath("$.description").value("Existing description"))
                 .andExpect(jsonPath("$.available").value(true));
 
-        verify(itemService, times(1)).getItemById(eq(itemId));
+        verify(itemService, times(1)).getItemById(eq(ITEM_ID));
     }
 
     @Test
     @DisplayName("Получение всех вещей владельца — успешный ответ")
     void getAllItemForOwner_Should_Return_All_Items_For_Owner_Test() throws Exception {
         // Given
-        long userId = 1L;
+        ItemResponseForOwnerDto item1 = createItemResponseForOwnerDto(
+                1L,
+                "Owner Item 1",
+                "Owner description 1",
+                true
+        );
 
-        ItemResponseForOwnerDto item1 = new ItemResponseForOwnerDto();
-        item1.setId(1L);
-        item1.setName("Owner Item 1");
-        item1.setDescription("Owner description 1");
-        item1.setAvailable(true);
-
-        ItemResponseForOwnerDto item2 = new ItemResponseForOwnerDto();
-        item2.setId(2L);
-        item2.setName("Owner Item 2");
-        item2.setDescription("Owner description 2");
-        item2.setAvailable(false);
+        ItemResponseForOwnerDto item2 = createItemResponseForOwnerDto(
+                2L,
+                "Owner Item 2",
+                "Owner description 2",
+                false
+        );
 
         List<ItemResponseForOwnerDto> items = List.of(item1, item2);
 
-        when(itemService.getAllItemForOwner(eq(userId)))
+        when(itemService.getAllItemForOwner(eq(USER_ID)))
                 .thenReturn(List.of(new Item(), new Item()));
         when(itemService.getListItemResponseForOwnerDto(any(List.class)))
                 .thenReturn(items);
 
         // When & Then
         mockMvc.perform(get("/items")
-                        .header("X-Sharer-User-Id", userId))
+                        .header("X-Sharer-User-Id", USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].name").value("Owner Item 1"))
                 .andExpect(jsonPath("$[1].id").value(2L))
                 .andExpect(jsonPath("$[1].name").value("Owner Item 2"));
 
-        verify(itemService, times(1)).getAllItemForOwner(eq(userId));
+        verify(itemService, times(1)).getAllItemForOwner(eq(USER_ID));
     }
 
     @Test
     @DisplayName("Обновление вещи по ID — успешный ответ")
     void updateItemById_Should_Return_Updated_Item_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long itemId = 1L;
         ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
         itemUpdateDto.setName("Updated Name");
         itemUpdateDto.setDescription("Updated description");
         itemUpdateDto.setAvailable(false);
 
-        ItemResponseDto updatedItemResponseDto = new ItemResponseDto();
-        updatedItemResponseDto.setId(itemId);
-        updatedItemResponseDto.setName("Updated Name");
-        updatedItemResponseDto.setDescription("Updated description");
-        updatedItemResponseDto.setAvailable(false);
+        ItemResponseDto updatedItemResponseDto = createItemResponseDto(
+                ITEM_ID,
+                "Updated Name",
+                "Updated description",
+                false
+        );
 
-        when(itemService.updateItemById(eq(userId), eq(itemId), any(ItemUpdateDto.class)))
+
+        when(itemService.updateItemById(eq(USER_ID), eq(ITEM_ID), any(ItemUpdateDto.class)))
                 .thenReturn(new Item());
         when(itemService.getItemResponseDto(any(Item.class)))
                 .thenReturn(updatedItemResponseDto);
 
         // When & Then
-        mockMvc.perform(patch("/items/{itemId}", itemId)
-                        .header("X-Sharer-User-Id", userId)
+        mockMvc.perform(patch("/items/{itemId}", ITEM_ID)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(itemUpdateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(itemId))
+                .andExpect(jsonPath("$.id").value(ITEM_ID))
                 .andExpect(jsonPath("$.name").value("Updated Name"))
                 .andExpect(jsonPath("$.description").value("Updated description"))
                 .andExpect(jsonPath("$.available").value(false));
 
-        verify(itemService, times(1)).updateItemById(eq(userId), eq(itemId), any(ItemUpdateDto.class));
+        verify(itemService, times(1)).updateItemById(eq(USER_ID), eq(ITEM_ID), any(ItemUpdateDto.class));
     }
 
     @Test
     @DisplayName("Удаление вещи по ID — успешный ответ (No Content)")
     void deleteItemById_Should_Return_No_Content_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long itemId = 1L;
-
-        doNothing().when(itemService).deleteItemById(eq(userId), eq(itemId));
+        doNothing().when(itemService).deleteItemById(eq(USER_ID), eq(ITEM_ID));
 
         // When & Then
-        mockMvc.perform(delete("/items/{itemId}", itemId)
-                        .header("X-Sharer-User-Id", userId))
+        mockMvc.perform(delete("/items/{itemId}", ITEM_ID)
+                        .header("X-Sharer-User-Id", USER_ID))
                 .andExpect(status().isNoContent());
 
-        verify(itemService, times(1)).deleteItemById(eq(userId), eq(itemId));
+        verify(itemService, times(1)).deleteItemById(eq(USER_ID), eq(ITEM_ID));
     }
 
     @Test
@@ -191,17 +220,20 @@ class ItemControllerTest {
         // Given
         String text = "test";
 
-        ItemResponseDto item1 = new ItemResponseDto();
-        item1.setId(1L);
-        item1.setName("Search Item 1");
-        item1.setDescription("Contains test keyword");
-        item1.setAvailable(true);
+        ItemResponseDto item1 = createItemResponseDto(
+                1L,
+                "Search Item 1",
+                "Contains test keyword",
+                true
+        );
 
-        ItemResponseDto item2 = new ItemResponseDto();
-        item2.setId(2L);
-        item2.setName("Another Test Item");
-        item2.setDescription("Another description with test");
-        item2.setAvailable(false);
+        ItemResponseDto item2 = createItemResponseDto(
+                2L,
+                "Another Test Item",
+                "Another description with test",
+                false
+        );
+
 
         List<ItemResponseDto> items = List.of(item1, item2);
 
@@ -226,25 +258,25 @@ class ItemControllerTest {
     @DisplayName("Добавление комментария к вещи — успешный ответ (CREATED)")
     void commentItemById_Should_Return_Created_Comment_Test() throws Exception {
         // Given
-        long userId = 1L;
-        long itemId = 1L;
         NewCommentDto newCommentDto = new NewCommentDto();
         newCommentDto.setText("Great item!");
 
-        CommentResponseDto commentResponseDto = new CommentResponseDto();
-        commentResponseDto.setId(1L);
-        commentResponseDto.setText("Great item!");
-        commentResponseDto.setAuthorName("Test User");
-        commentResponseDto.setCreated(java.time.LocalDateTime.now());
+        CommentResponseDto commentResponseDto = createCommentResponseDto(
+                1L,
+                "Great item!",
+                "Test User",
+                LocalDateTime.now()
+        );
 
-        when(itemService.commentItemById(eq(userId), eq(itemId), any(NewCommentDto.class)))
+
+        when(itemService.commentItemById(eq(USER_ID), eq(ITEM_ID), any(NewCommentDto.class)))
                 .thenReturn(new Comment());
         when(itemService.getCommentResponseDto(any(Comment.class)))
                 .thenReturn(commentResponseDto);
 
         // When & Then
-        mockMvc.perform(post("/items/{itemId}/comment", itemId)
-                        .header("X-Sharer-User-Id", userId)
+        mockMvc.perform(post("/items/{itemId}/comment", ITEM_ID)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newCommentDto)))
                 .andExpect(status().isCreated())
@@ -253,6 +285,6 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.authorName").value("Test User"))
                 .andExpect(jsonPath("$.created").exists());
 
-        verify(itemService, times(1)).commentItemById(eq(userId), eq(itemId), any(NewCommentDto.class));
+        verify(itemService, times(1)).commentItemById(eq(USER_ID), eq(ITEM_ID), any(NewCommentDto.class));
     }
 }

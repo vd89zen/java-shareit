@@ -19,15 +19,20 @@ class NewItemDtoJsonTest {
     private final ObjectMapper objectMapper;
     private final JacksonTester<NewItemDto> json;
 
+    private NewItemDto createNewItemDto(String name, String description, Boolean available, Long requestId) {
+        return new NewItemDto(name, description, available, requestId);
+    }
+
     @Test
     @DisplayName("Сериализация NewItemDto в JSON — все поля заполнены")
     void serialize_NewItemDto_With_All_Fields_Filled_Should_Produce_Valid_Json_Test() throws Exception {
         // Given
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Дрель электрическая");
-        newItemDto.setDescription("Мощная дрель для сверления отверстий в бетоне");
-        newItemDto.setAvailable(true);
-        newItemDto.setRequestId(123L);
+        NewItemDto newItemDto = createNewItemDto(
+                "Дрель электрическая",
+                "Мощная дрель для сверления отверстий в бетоне",
+                true,
+                123L
+        );
 
         // When
         JsonContent<NewItemDto> result = json.write(newItemDto);
@@ -54,12 +59,13 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация JSON в NewItemDto — все поля присутствуют")
     void deserialize_Json_With_All_Fields_Present_Should_Create_NewItemDto_Test() throws Exception {
         // Given
-        NewItemDto dto = new NewItemDto();
-        dto.setName("Пылесос робот");
-        dto.setDescription("Автоматический пылесос с функцией влажной уборки");
-        dto.setAvailable(false);
-        dto.setRequestId(456L);
-        String jsonString = objectMapper.writeValueAsString(dto);//другой подход к формированию jsonstring
+        NewItemDto dto = createNewItemDto(
+                "Пылесос робот",
+                "Автоматический пылесос с функцией влажной уборки",
+                false,
+                456L
+        );
+        String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
         NewItemDto result = json.parseObject(jsonString);
@@ -75,10 +81,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация JSON — отсутствует requestId (опциональное поле)")
     void deserialize_Json_Without_RequestId_Should_Create_Object_With_Null_RequestId_Test() throws Exception {
         // Given
-        NewItemDto dto = new NewItemDto();
-        dto.setName("Фен");
-        dto.setDescription("Профессиональный фен для волос");
-        dto.setAvailable(true);
+        NewItemDto dto = createNewItemDto(
+                "Фен",
+                "Профессиональный фен для волос",
+                true,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -95,11 +103,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Сериализация с requestId = null — должно корректно обработать")
     void serialize_NewItemDto_With_RequestId_Null_Should_Include_Null_In_Json_Test() throws Exception {
         // Given
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Ноутбук");
-        newItemDto.setDescription("Игровой ноутбук с мощной видеокартой");
-        newItemDto.setAvailable(false);
-        newItemDto.setRequestId(null);
+        NewItemDto newItemDto = createNewItemDto(
+                "Ноутбук",
+                "Игровой ноутбук с мощной видеокартой",
+                false,
+                null
+        );
 
         // When
         JsonContent<NewItemDto> result = json.write(newItemDto);
@@ -126,11 +135,13 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация очень длинного названия (>128 символов) — должно создать объект")
     void deserialize_Json_With_Very_Long_Name_Should_Create_Object_Test() throws Exception {
         // Given
-        String veryLongName = "X".repeat(150); // 150 символов (превышает лимит 128)
-        NewItemDto dto = new NewItemDto();
-        dto.setName(veryLongName);
-        dto.setDescription("Короткое описание");
-        dto.setAvailable(true);
+        String veryLongName = "X".repeat(150);
+        NewItemDto dto = createNewItemDto(
+                veryLongName,
+                "Короткое описание",
+                true,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -147,11 +158,13 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация очень длинного описания (>1024 символов) — должно создать объект")
     void deserialize_Json_With_Very_Long_Description_Should_Create_Object_Test() throws Exception {
         // Given
-        String veryLongDescription = "A".repeat(1100); // 1100 символов
-        NewItemDto dto = new NewItemDto();
-        dto.setName("Вещь");
-        dto.setDescription(veryLongDescription);
-        dto.setAvailable(false);
+        String veryLongDescription = "A".repeat(1100);
+        NewItemDto dto = createNewItemDto(
+                "Вещь",
+                veryLongDescription,
+                false,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -168,10 +181,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация с пустым названием — должно создать объект с пустым полем")
     void deserialize_Json_With_Empty_Name_Should_Create_Object_Test() throws Exception {
         // Given
-        NewItemDto dto = new NewItemDto();
-        dto.setName("");
-        dto.setDescription("Нормальное описание");
-        dto.setAvailable(true);
+        NewItemDto dto = createNewItemDto(
+                "",
+                "Нормальное описание",
+                true,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -187,9 +202,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация без поля available — должно создать объект с null available")
     void deserialize_Json_Without_Available_Field_Should_Create_Object_With_Null_Available_Test() throws Exception {
         // Given
-        NewItemDto dto = new NewItemDto();
-        dto.setName("Вещь");
-        dto.setDescription("Описание без доступности");
+        NewItemDto dto = createNewItemDto(
+                "Вещь",
+                "Описание без доступности",
+                null,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -205,10 +223,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация с пробелами в названии — должно создать объект")
     void deserialize_Json_With_Spaces_In_Name_Should_Create_Object_Test() throws Exception {
         // Given
-        NewItemDto dto = new NewItemDto();
-        dto.setName("   ");
-        dto.setDescription("Описание с пробелами в названии");
-        dto.setAvailable(true);
+        NewItemDto dto = createNewItemDto(
+                "   ",
+                "Описание с пробелами в названии",
+                true,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -224,10 +244,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Десериализация с null в описании — должно создать объект с null description")
     void deserialize_Json_With_Null_Description_Should_Create_Object_With_Null_Description_Test() throws Exception {
         // Given
-        NewItemDto dto = new NewItemDto();
-        dto.setName("Вещь с null описанием");
-        dto.setDescription(null);
-        dto.setAvailable(false);
+        NewItemDto dto = createNewItemDto(
+                "Вещь с null описанием",
+                null,
+                false,
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -243,11 +265,12 @@ class NewItemDtoJsonTest {
     @DisplayName("Сериализация объекта с null полями — все поля должны присутствовать в JSON")
     void serialize_NewItemDto_With_Null_Fields_Should_Include_All_Fields_In_Json_Test() throws Exception {
         // Given
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Объект с null полями");
-        newItemDto.setDescription(null);
-        newItemDto.setAvailable(null);
-        newItemDto.setRequestId(null);
+        NewItemDto newItemDto = createNewItemDto(
+                "Объект с null полями",
+                null,
+                null,
+                null
+        );
 
         // When
         JsonContent<NewItemDto> result = json.write(newItemDto);

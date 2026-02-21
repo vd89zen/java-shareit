@@ -34,18 +34,47 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+
+    private NewUserDto createNewUserDto(String name, String email) {
+        NewUserDto userDto = new NewUserDto();
+        userDto.setName(name);
+        userDto.setEmail(email);
+        return userDto;
+    }
+
+    private UserResponseDto createUserResponseDto(long id, String name, String email) {
+        UserResponseDto userResponseDto = new UserResponseDto();
+        userResponseDto.setId(id);
+        userResponseDto.setName(name);
+        userResponseDto.setEmail(email);
+        return userResponseDto;
+    }
+
+    private UserUpdateDto createUserUpdateDto(String name, String email) {
+        UserUpdateDto userUpdateDto = new UserUpdateDto();
+        userUpdateDto.setName(name);
+        userUpdateDto.setEmail(email);
+        return userUpdateDto;
+    }
+
+    private List<UserResponseDto> createUserResponseDtoList() {
+        UserResponseDto user1 = createUserResponseDto(1L, "User 1", "user1@example.com");
+        UserResponseDto user2 = createUserResponseDto(2L, "User 2", "user2@example.com");
+        return List.of(user1, user2);
+    }
+
     @Test
     @DisplayName("Создание пользователя — успешный ответ (CREATED)")
     void createUser_Should_Return_Created_Test() throws Exception {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Test User");
-        newUserDto.setEmail("test@example.com");
+        NewUserDto newUserDto = createNewUserDto("Test User", "test@example.com");
 
-        UserResponseDto userResponseDto = new UserResponseDto();
-        userResponseDto.setId(1L);
-        userResponseDto.setName("Test User");
-        userResponseDto.setEmail("test@example.com");
+        UserResponseDto userResponseDto = createUserResponseDto(
+                USER_ID,
+                "Test User",
+                "test@example.com"
+        );
 
         when(userService.createUser(any(NewUserDto.class))).thenReturn(new User());
         when(userService.getUserResponseDto(any(User.class))).thenReturn(userResponseDto);
@@ -55,53 +84,41 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newUserDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.id").value(USER_ID))
                 .andExpect(jsonPath("$.name").value("Test User"))
                 .andExpect(jsonPath("$.email").value("test@example.com"));
 
         verify(userService, times(1)).createUser(any(NewUserDto.class));
     }
 
-
     @Test
     @DisplayName("Получение пользователя по ID — успешный ответ")
     void getUserById_Should_Return_User_Test() throws Exception {
         // Given
-        long userId = 1L;
+        UserResponseDto userResponseDto = createUserResponseDto(
+                USER_ID,
+                "Existing User",
+                "existing@example.com"
+        );
 
-        UserResponseDto userResponseDto = new UserResponseDto();
-        userResponseDto.setId(userId);
-        userResponseDto.setName("Existing User");
-        userResponseDto.setEmail("existing@example.com");
-
-        when(userService.getUserById(eq(userId))).thenReturn(new User());
+        when(userService.getUserById(eq(USER_ID))).thenReturn(new User());
         when(userService.getUserResponseDto(any(User.class))).thenReturn(userResponseDto);
 
         // When & Then
-        mockMvc.perform(get("/users/{userId}", userId))
+        mockMvc.perform(get("/users/{userId}", USER_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId))
+                .andExpect(jsonPath("$.id").value(USER_ID))
                 .andExpect(jsonPath("$.name").value("Existing User"))
                 .andExpect(jsonPath("$.email").value("existing@example.com"));
 
-        verify(userService, times(1)).getUserById(eq(userId));
+        verify(userService, times(1)).getUserById(eq(USER_ID));
     }
 
     @Test
     @DisplayName("Получение всех пользователей — успешный ответ")
     void getAllUser_Should_Return_All_Users_Test() throws Exception {
         // Given
-        UserResponseDto user1 = new UserResponseDto();
-        user1.setId(1L);
-        user1.setName("User 1");
-        user1.setEmail("user1@example.com");
-
-        UserResponseDto user2 = new UserResponseDto();
-        user2.setId(2L);
-        user2.setName("User 2");
-        user2.setEmail("user2@example.com");
-
-        List<UserResponseDto> users = List.of(user1, user2);
+        List<UserResponseDto> users = createUserResponseDtoList();
 
         when(userService.getAllUser()).thenReturn(List.of(new User(), new User()));
         when(userService.getListUserResponseDto(any(List.class))).thenReturn(users);
@@ -121,44 +138,42 @@ class UserControllerTest {
     @DisplayName("Обновление пользователя по ID — успешный ответ")
     void updateUserById_Should_Return_Updated_User_Test() throws Exception {
         // Given
-        long userId = 1L;
-        UserUpdateDto userUpdateDto = new UserUpdateDto();
-        userUpdateDto.setName("Updated Name");
-        userUpdateDto.setEmail("updated@example.com");
+        UserUpdateDto userUpdateDto = createUserUpdateDto("Updated Name", "updated@example.com");
 
-        UserResponseDto updatedUserResponseDto = new UserResponseDto();
-        updatedUserResponseDto.setId(userId);
-        updatedUserResponseDto.setName("Updated Name");
-        updatedUserResponseDto.setEmail("updated@example.com");
+        UserResponseDto updatedUserResponseDto = createUserResponseDto(
+                USER_ID,
+                "Updated Name",
+                "updated@example.com"
+        );
 
-        when(userService.updateUserById(eq(userId), any(UserUpdateDto.class))).thenReturn(new User());
-        when(userService.getUserResponseDto(any(User.class))).thenReturn(updatedUserResponseDto);
+        when(userService.updateUserById(eq(USER_ID), any(UserUpdateDto.class)))
+                .thenReturn(new User());
+        when(userService.getUserResponseDto(any(User.class)))
+                .thenReturn(updatedUserResponseDto);
 
         // When & Then
-        mockMvc.perform(patch("/users/{userId}", userId)
+        mockMvc.perform(patch("/users/{userId}", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userUpdateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId))
+                .andExpect(jsonPath("$.id").value(USER_ID))
                 .andExpect(jsonPath("$.name").value("Updated Name"))
                 .andExpect(jsonPath("$.email").value("updated@example.com"));
 
-        verify(userService, times(1)).updateUserById(eq(userId), any(UserUpdateDto.class));
+        verify(userService, times(1)).updateUserById(eq(USER_ID), any(UserUpdateDto.class));
     }
-
 
     @Test
     @DisplayName("Удаление пользователя по ID — успешный ответ (No Content)")
     void deleteUserById_Should_Return_No_Content_Test() throws Exception {
         // Given
-        long userId = 1L;
-
-        doNothing().when(userService).deleteUserById(eq(userId));
+        doNothing().when(userService).deleteUserById(eq(USER_ID));
 
         // When & Then
-        mockMvc.perform(delete("/users/{userId}", userId))
+        mockMvc.perform(delete("/users/{userId}", USER_ID))
                 .andExpect(status().isNoContent());
 
-        verify(userService, times(1)).deleteUserById(eq(userId));
+        verify(userService, times(1)).deleteUserById(eq(USER_ID));
     }
 }
+

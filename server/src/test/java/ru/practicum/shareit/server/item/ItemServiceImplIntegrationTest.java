@@ -1,5 +1,6 @@
 package ru.practicum.shareit.server.item;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,25 +41,48 @@ class ItemServiceImplIntegrationTest {
     @Autowired
     private BookingRepository bookingRepository;
 
+    private User owner;
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        owner = userService.createUser(new NewUserDto("Owner", "owner@test.com"));
+        user = userService.createUser(new NewUserDto("User", "user@test.com"));
+    }
+
+    private Item createItem(User owner, String name, String description, boolean available) {
+        return itemService.createItem(
+                owner.getId(),
+                new NewItemDto(name, description, available, null));
+    }
+
+    private Booking createCompletedBooking(User booker, Item item) {
+        NewBookingDto newBookingDto = new NewBookingDto(
+                item.getId(),
+                LocalDateTime.now().minusDays(5),
+                LocalDateTime.now().minusDays(2)
+        );
+
+        Booking newBooking = BookingMapper.toBooking(newBookingDto);
+        newBooking.setBooker(booker);
+        newBooking.setItem(item);
+        newBooking.setStatus(Status.WAITING);
+        newBooking = bookingRepository.save(newBooking);
+        newBooking.setStatus(Status.APPROVED);
+        newBooking.setItem(itemService.updateItemAvailable(newBooking.getItem(), false));
+        return bookingRepository.save(newBooking);
+    }
+
+    private NewCommentDto createNewCommentDto(String text) {
+        return new NewCommentDto(text);
+    }
+
     @Test
     @DisplayName("Поиск вещей по тексту (есть совпадения)")
     void searchItem_Should_Find_Items_By_Name_Or_Description_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Owner");
-        newUserDto.setEmail("owner@test.com");
-        User owner = userService.createUser(newUserDto);
-
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Молоток");
-        newItemDto.setDescription("Хороший молоток для ремонта");
-        newItemDto.setAvailable(true);
-        itemService.createItem(owner.getId(), newItemDto);
-
-        newItemDto.setName("Отвёртка");
-        newItemDto.setDescription("Набор отвёрток разных размеров");
-        newItemDto.setAvailable(true);
-        itemService.createItem(owner.getId(), newItemDto);
+        createItem(owner, "Молоток", "Хороший молоток для ремонта", true);
+        createItem(owner, "Отвёртка", "Набор отвёрток разных размеров", true);
 
         // When
         List<Item> result = itemService.searchItem("молот");
@@ -81,16 +105,7 @@ class ItemServiceImplIntegrationTest {
     @DisplayName("Поиск без совпадений возвращает пустой список")
     void searchItem_Should_Return_Empty_List_When_No_Matches_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Owner");
-        newUserDto.setEmail("owner@test.com");
-        User owner = userService.createUser(newUserDto);
-
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Стул");
-        newItemDto.setDescription("Деревянный стул");
-        newItemDto.setAvailable(true);
-        itemService.createItem(owner.getId(), newItemDto);
+        createItem(owner, "Стул", "Деревянный стул", true);
 
         // When
         List<Item> result = itemService.searchItem("стол");
@@ -103,17 +118,7 @@ class ItemServiceImplIntegrationTest {
     @DisplayName("Поиск с учётом регистра (игнорирует регистр)")
     void searchItem_Should_Ignore_Case_Test() {
         // Given
-
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Owner");
-        newUserDto.setEmail("owner@test.com");
-        User owner = userService.createUser(newUserDto);
-
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Ноутбук");
-        newItemDto.setDescription("Мощный игровой ноутбук");
-        newItemDto.setAvailable(true);
-        itemService.createItem(owner.getId(), newItemDto);
+        createItem(owner, "Ноутбук", "Мощный игровой ноутбук", true);
 
         // When
         List<Item> result = itemService.searchItem("ноутбук");
@@ -127,37 +132,11 @@ class ItemServiceImplIntegrationTest {
     @DisplayName("Добавление комментария при наличии завершённого бронирования")
     void commentItemById_Should_Add_Comment_When_User_Has_Completed_Booking_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Owner");
-        newUserDto.setEmail("owner@test.com");
-        User owner = userService.createUser(newUserDto);
-
-        newUserDto.setName("User");
-        newUserDto.setEmail("user@test.com");
-        User user = userService.createUser(newUserDto);
-
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Вещь для бронирования");
-        newItemDto.setDescription("Вещь для бронирования");
-        newItemDto.setAvailable(true);
-        Item item = itemService.createItem(owner.getId(), newItemDto);
-
-        NewBookingDto newBookingDto = new NewBookingDto();
-        newBookingDto.setItemId(item.getId());
-        newBookingDto.setStart(LocalDateTime.now().minusDays(5));
-        newBookingDto.setEnd(LocalDateTime.now().minusDays(2));
-
-        Booking newBooking = BookingMapper.toBooking(newBookingDto);
-        newBooking.setBooker(user);
-        newBooking.setItem(item);
-        newBooking.setStatus(Status.WAITING);
-        newBooking = bookingRepository.save(newBooking);
-        newBooking.setStatus(Status.APPROVED);
-        newBooking.setItem(itemService.updateItemAvailable(newBooking.getItem(), false));
-        newBooking = bookingRepository.save(newBooking);
+        Item item = createItem(owner, "Вещь для бронирования", "Вещь для бронирования", true);
+        createCompletedBooking(user, item);
 
         // When
-        NewCommentDto commentDto = new NewCommentDto("Отличный товар, очень доволен!");
+        NewCommentDto commentDto = createNewCommentDto("Отличный товар, очень доволен!");
         Comment comment = itemService.commentItemById(user.getId(), item.getId(), commentDto);
 
         // Then
@@ -172,26 +151,12 @@ class ItemServiceImplIntegrationTest {
     @DisplayName("Ошибка при попытке комментария без бронирования")
     void commentItemById_Should_Throw_Exception_When_No_Booking_Test() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Owner");
-        newUserDto.setEmail("owner@test.com");
-        User owner = userService.createUser(newUserDto);
-
-        newUserDto.setName("User");
-        newUserDto.setEmail("user@test.com");
-        User user = userService.createUser(newUserDto);
-
-        NewItemDto newItemDto = new NewItemDto();
-        newItemDto.setName("Вещь без бронирования");
-        newItemDto.setDescription("Вещь без бронирования");
-        newItemDto.setAvailable(true);
-        Item item = itemService.createItem(owner.getId(), newItemDto);
+        Item item = createItem(owner, "Вещь без бронирования", "Вещь без бронирования", true);
 
         // Then
         assertThrows(WrongRequestException.class, () -> {
             itemService.commentItemById(user.getId(), item.getId(),
-                    new NewCommentDto("Мой комментарий"));
+                    createNewCommentDto("Мой комментарий"));
         });
     }
 }
-

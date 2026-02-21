@@ -25,13 +25,17 @@ class UserServiceImplIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    private NewUserDto createNewUserDto(String name, String email) {
+        return new NewUserDto(name, email);
+    }
+
     @Test
     @DisplayName("createUser — должен создать нового пользователя с уникальными данными")
     void createUser_ShouldCreateNewUserWithUniqueData() {
         // Given
-        NewUserDto newUserDto = new NewUserDto();
-        newUserDto.setName("Test User");
-        newUserDto.setEmail("test@user.com");
+        String testName = "Test User";
+        String testEmail = "test@user.com";
+        NewUserDto newUserDto = createNewUserDto(testName, testEmail);
 
         // When
         User createdUser = userService.createUser(newUserDto);
@@ -39,28 +43,24 @@ class UserServiceImplIntegrationTest {
         // Then
         assertThat(createdUser).isNotNull();
         assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getName()).isEqualTo("Test User");
-        assertThat(createdUser.getEmail()).isEqualTo("test@user.com");
+        assertThat(createdUser.getName()).isEqualTo(testName);
+        assertThat(createdUser.getEmail()).isEqualTo(testEmail);
 
         User foundInDb = userRepository.findById(createdUser.getId())
                 .orElse(null);
         assertThat(foundInDb).isNotNull();
-        assertThat(foundInDb.getName()).isEqualTo("Test User");
-        assertThat(foundInDb.getEmail()).isEqualTo("test@user.com");
+        assertThat(foundInDb.getName()).isEqualTo(testName);
+        assertThat(foundInDb.getEmail()).isEqualTo(testEmail);
     }
 
     @Test
     @DisplayName("createUser — должен выбросить ValidationException при дублировании email")
     void createUser_ShouldThrowValidationExceptionWhenEmailDuplicate() {
         // Given
-        NewUserDto firstUserDto = new NewUserDto();
-        firstUserDto.setName("First User");
-        firstUserDto.setEmail("duplicate@email.com");
+        NewUserDto firstUserDto = createNewUserDto("First User", "duplicate@email.com");
         userService.createUser(firstUserDto);
 
-        NewUserDto secondUserDto = new NewUserDto();
-        secondUserDto.setName("Second User");
-        secondUserDto.setEmail("duplicate@email.com");
+        NewUserDto secondUserDto = createNewUserDto("Second User", "duplicate@email.com");
 
         // When & Then
         assertThatThrownBy(() -> userService.createUser(secondUserDto))

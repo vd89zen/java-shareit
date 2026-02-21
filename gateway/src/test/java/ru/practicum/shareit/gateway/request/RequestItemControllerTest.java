@@ -29,25 +29,28 @@ class RequestItemControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_ID = 1L;
+    private static final int PAGE = 0;
+    private static final int SIZE = 10;
+
     @Test
     @DisplayName("Создание запроса на вещь — успешный ответ")
     void createRequestItem_Should_Return_Created_Test() throws Exception {
         // Given
-        long userId = 1L;
         NewRequestItemDto newRequestItemDto = new NewRequestItemDto();
         newRequestItemDto.setDescription("Test request");
 
-        when(requestItemClient.createRequestItem(eq(userId), any(NewRequestItemDto.class)))
+        when(requestItemClient.createRequestItem(eq(USER_ID), any(NewRequestItemDto.class)))
                 .thenReturn(ResponseEntity.ok().build());
 
         // When & Then
         mockMvc.perform(post("/requests")
-                        .header("X-Sharer-User-Id", userId)
+                        .header("X-Sharer-User-Id", USER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newRequestItemDto)))
                 .andExpect(status().isOk());
 
-        verify(requestItemClient, times(1)).createRequestItem(eq(userId), any(NewRequestItemDto.class));
+        verify(requestItemClient, times(1)).createRequestItem(eq(USER_ID), any(NewRequestItemDto.class));
     }
 
     @Test
@@ -70,43 +73,35 @@ class RequestItemControllerTest {
     @DisplayName("Получение всех запросов пользователя — успешный ответ с пагинацией")
     void getAllRequestItemByRequestor_Should_Return_All_Requests_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
-        int page = 0;
-        int size = 10;
-
-        when(requestItemClient.getAllRequestItemByRequestor(eq(userId), eq(page), eq(size)))
+        when(requestItemClient.getAllRequestItemByRequestor(eq(USER_ID), eq(PAGE), eq(SIZE)))
                 .thenReturn(ResponseEntity.ok().body("[\"Request1\", \"Request2\"]"));
 
         // When & Then
         mockMvc.perform(get("/requests")
-                        .header("X-Sharer-User-Id", userId)
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .header("X-Sharer-User-Id", USER_ID)
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[\"Request1\", \"Request2\"]"));
 
-        verify(requestItemClient, times(1)).getAllRequestItemByRequestor(eq(userId), eq(page), eq(size));
+        verify(requestItemClient, times(1)).getAllRequestItemByRequestor(eq(USER_ID), eq(PAGE), eq(SIZE));
     }
 
     @Test
     @DisplayName("Получение всех запросов другими пользователями — успешный ответ с пагинацией")
     void getAllRequestItemByOtherUser_Should_Return_All_Requests_From_Other_Users_With_Pagination_Test() throws Exception {
         // Given
-        long userId = 1L;
-        int page = 0;
-        int size = 10;
-
-        when(requestItemClient.getAllRequestItemByOtherUser(eq(userId), eq(page), eq(size)))
+        when(requestItemClient.getAllRequestItemByOtherUser(eq(USER_ID), eq(PAGE), eq(SIZE)))
                 .thenReturn(ResponseEntity.ok().body("[\"OtherRequest1\", \"OtherRequest2\"]"));
 
         // When & Then
         mockMvc.perform(get("/requests/all")
-                        .header("X-Sharer-User-Id", userId)
-                        .param("page", String.valueOf(page))
-                        .param("size", String.valueOf(size)))
+                        .header("X-Sharer-User-Id", USER_ID)
+                        .param("page", String.valueOf(PAGE))
+                        .param("size", String.valueOf(SIZE)))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[\"OtherRequest1\", \"OtherRequest2\"]"));
 
-        verify(requestItemClient, times(1)).getAllRequestItemByOtherUser(eq(userId), eq(page), eq(size));
+        verify(requestItemClient, times(1)).getAllRequestItemByOtherUser(eq(USER_ID), eq(PAGE), eq(SIZE));
     }
 }

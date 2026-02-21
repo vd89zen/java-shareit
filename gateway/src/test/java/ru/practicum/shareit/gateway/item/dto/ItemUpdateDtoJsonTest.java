@@ -19,14 +19,23 @@ class ItemUpdateDtoJsonTest {
     private final ObjectMapper objectMapper;
     private final JacksonTester<ItemUpdateDto> json;
 
+    private ItemUpdateDto createItemUpdateDto(String name, String description, Boolean available) {
+        ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
+        itemUpdateDto.setName(name);
+        itemUpdateDto.setDescription(description);
+        itemUpdateDto.setAvailable(available);
+        return itemUpdateDto;
+    }
+
     @Test
     @DisplayName("Сериализация ItemUpdateDto в JSON — все поля заполнены")
     void serialize_ItemUpdateDto_With_All_Fields_Filled_Should_Produce_Valid_Json_Test() throws Exception {
         // Given
-        ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
-        itemUpdateDto.setName("Обновлённое название");
-        itemUpdateDto.setDescription("Обновлённое описание");
-        itemUpdateDto.setAvailable(true);
+        ItemUpdateDto itemUpdateDto = createItemUpdateDto(
+                "Обновлённое название",
+                "Обновлённое описание",
+                true
+        );
 
         // When
         JsonContent<ItemUpdateDto> result = json.write(itemUpdateDto);
@@ -49,10 +58,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация JSON в ItemUpdateDto — все поля присутствуют")
     void deserialize_Json_With_All_Fields_Present_Should_Create_ItemUpdateDto_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName("Новое название");
-        dto.setDescription("Новое описание");
-        dto.setAvailable(false);
+        ItemUpdateDto dto = createItemUpdateDto(
+                "Новое название",
+                "Новое описание",
+                false
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -68,10 +78,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация JSON — отсутствует поле name")
     void deserialize_Json_Without_Name_Field_Should_Create_Object_With_Null_Name_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName(null);
-        dto.setDescription("Описание без названия");
-        dto.setAvailable(true);
+        ItemUpdateDto dto = createItemUpdateDto(
+                null,
+                "Описание без названия",
+                true
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -87,10 +98,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация с name = null — должно создать объект с null name")
     void deserialize_Json_With_Name_Null_Should_Create_Object_With_Null_Name_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName(null);
-        dto.setDescription("Нормальное описание");
-        dto.setAvailable(false);
+        ItemUpdateDto dto = createItemUpdateDto(
+                null,
+                "Нормальное описание",
+                false
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -106,10 +118,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация с description = null — должно создать объект с null description")
     void deserialize_Json_With_Description_Null_Should_Create_Object_With_Null_Description_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName("Нормальное название");
-        dto.setDescription(null);
-        dto.setAvailable(true);
+        ItemUpdateDto dto = createItemUpdateDto(
+                "Нормальное название",
+                null,
+                true
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -125,10 +138,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация с пустым name — должно создать объект с пустой строкой")
     void deserialize_Json_With_Empty_Name_Should_Create_Object_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName("");
-        dto.setDescription("Описание с пустым названием");
-        dto.setAvailable(true);
+        ItemUpdateDto dto = createItemUpdateDto(
+                "",
+                "Описание с пустым названием",
+                true
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -144,10 +158,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация с пробелами в name — должно создать объект со строкой из пробелов")
     void deserialize_Json_With_Spaces_In_Name_Should_Create_Object_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName("   ");
-        dto.setDescription("Описание с пробелами в названии");
-        dto.setAvailable(false);
+        ItemUpdateDto dto = createItemUpdateDto(
+                "   ",
+                "Описание с пробелами в названии",
+                false
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -163,9 +178,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Десериализация без поля available — должно создать объект с null available")
     void deserialize_Json_Without_Available_Field_Should_Create_Object_With_Null_Available_Test() throws Exception {
         // Given
-        ItemUpdateDto dto = new ItemUpdateDto();
-        dto.setName("Вещь без доступности");
-        dto.setDescription("Описание без поля available");
+        ItemUpdateDto dto = createItemUpdateDto(
+                "Вещь без доступности",
+                "Описание без поля available",
+                null
+        );
         String jsonString = objectMapper.writeValueAsString(dto);
 
         // When
@@ -181,10 +198,11 @@ class ItemUpdateDtoJsonTest {
     @DisplayName("Сериализация объекта с null полями — все поля должны присутствовать в JSON")
     void serialize_ItemUpdateDto_With_Null_Fields_Should_Include_All_Fields_In_Json_Test() throws Exception {
         // Given
-        ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
-        itemUpdateDto.setName(null);
-        itemUpdateDto.setDescription(null);
-        itemUpdateDto.setAvailable(null);
+        ItemUpdateDto itemUpdateDto = createItemUpdateDto(
+                null,
+                null,
+                null
+        );
 
         // When
         JsonContent<ItemUpdateDto> result = json.write(itemUpdateDto);
